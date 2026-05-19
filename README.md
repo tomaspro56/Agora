@@ -14,11 +14,31 @@ Proyecto académico — Materia Lógica de Programación · Instituto Tecnológi
 | API REST (Flask) | ✅ Implementado | 8 endpoints en 3 blueprints, SQLite, autenticación con hash |
 | Modelos de datos | ✅ Implementado | 4 modelos con relaciones y cascade |
 | Tema claro/oscuro | ✅ Implementado | Persistido en `localStorage` |
+| Orquestación con Docker Compose | ✅ Implementado | Frontend (Nginx) + Backend (Flask) en contenedores |
 | Base de datos relacional (PostgreSQL) | 🔜 Planeado | Actualmente SQLite vía SQLAlchemy |
 | Tareas asíncronas (Celery + Redis) | 🔜 Planeado | No implementado |
 | Notificaciones por correo (Gmail SMTP) | 🔜 Planeado | No implementado |
 | Servidor WSGI de producción (Gunicorn) | 🔜 Planeado | Actualmente Flask dev server |
 | Calificaciones de servicio | 🔜 Planeado | No implementado |
+
+---
+
+## 🏗️ Arquitectura
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    docker compose                        │
+│                                                          │
+│  ┌──────────────────┐         ┌──────────────────┐      │
+│  │ Frontend         │  HTTP   │ Backend          │      │
+│  │ nginx:alpine     │ ──────► │ python:3.11-slim │      │
+│  │ Puerto :8003     │         │ Puerto :5000     │      │
+│  │ HTML / CSS / JS  │         │ Flask + CORS     │      │
+│  └──────────────────┘         │ SQLAlchemy       │      │
+│                                │ SQLite (agora.db)│      │
+│                                └──────────────────┘      │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -143,6 +163,8 @@ API REST construida con Flask + SQLAlchemy, organizada en tres blueprints:
 | Flask-CORS | Habilitación de CORS para peticiones del frontend |
 | Werkzeug | Hash seguro de contraseñas |
 | SQLite | Base de datos embebida (desarrollo) |
+| Docker | Contenerización del backend (Python + Flask) |
+| Docker Compose | Orquestación de servicios (frontend Nginx + backend Flask) |
 
 ### Roadmap / próximos pasos
 
@@ -152,47 +174,51 @@ API REST construida con Flask + SQLAlchemy, organizada en tres blueprints:
 | Gunicorn | Servidor WSGI para despliegue productivo |
 | Celery + Redis | Tareas asíncronas (notificaciones por correo) |
 | Gmail SMTP | Envío de correos en cambios de estado del pedido |
-| Docker Compose | Orquestación del stack completo |
 
 ---
 
 ## Instalación y ejecución
 
-### Frontend
+### Opción 1 — Docker Compose (recomendado)
 
-1. Clonar el repositorio:
-   ```bash
-   git clone <url-del-repositorio>
-   cd Agora
-   ```
+Levanta toda la aplicación con un solo comando:
 
-2. Abrir `index.html` directamente en el navegador, o usar Live Server en VS Code:
-   - Instalar la extensión **Live Server**
-   - Clic derecho sobre `index.html` → `Open with Live Server`
-   - Disponible en `http://127.0.0.1:5500`
+```bash
+git clone https://github.com/tomaspro56/Agora.git
+cd Agora
+docker compose up -d
+```
 
-### Backend
+Servicios disponibles:
+- Frontend: http://localhost:8003
+- API Backend: http://localhost:5000
 
-1. Crear y activar el entorno virtual:
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate        # Linux / macOS
-   venv\Scripts\activate           # Windows
-   ```
+Para detener:
+```bash
+docker compose down
+```
 
-2. Instalar dependencias:
-   ```bash
-   pip install -r requirements.txt
-   ```
+> **Base de datos:** SQLite se crea automáticamente en `backend/instance/agora.db` al primer arranque, con todas las tablas vacías. El archivo está ignorado por git, así que cada despliegue arranca con una base limpia.
 
-3. Iniciar el servidor:
-   ```bash
-   python app.py
-   ```
-   La API queda disponible en `http://localhost:5000`. La base de datos SQLite (`agora.db`) se crea automáticamente en el primer arranque.
+### Opción 2 — Ejecución manual (desarrollo)
 
-> **Nota:** el archivo `docker-compose.yml` está incluido en el repositorio como base para el despliegue futuro con PostgreSQL + Redis + Celery. El stack Docker completo **no está operativo** en la versión actual.
+Útil para modificar código del backend con hot-reload de Flask.
+
+#### Frontend
+
+Abrir `index.html` con Live Server (extensión de VS Code) en http://127.0.0.1:5500.
+
+#### Backend
+
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+
+API disponible en http://localhost:5000. La base de datos SQLite (`agora.db`) se crea automáticamente en el primer arranque.
 
 ---
 
@@ -229,13 +255,14 @@ Agora/
 │   ├── models.py                   # Modelos SQLAlchemy
 │   ├── requirements.txt
 │   ├── Dockerfile
+│   ├── instance/                   # Generado automáticamente — contiene agora.db (ignorado por git)
 │   └── routes/
 │       ├── auth.py                 # Blueprint /api/auth
 │       ├── pedidos.py              # Blueprint /api/pedidos
 │       └── inventario.py           # Blueprint /api/productos
 ├── DiagramaFlujo/
 │   └── Agora.drawio
-├── docker-compose.yml              # Configuración futura de despliegue
+├── docker-compose.yml
 └── README.md
 ```
 
@@ -243,7 +270,7 @@ Agora/
 
 ## Equipo
 
-Proyecto desarrollado en equipo para la materia Lógica de Programación del ITM, 2026.
+Proyecto académico. Equipo de desarrollo:
 
 | Integrante | Rol principal |
 |---|---|
