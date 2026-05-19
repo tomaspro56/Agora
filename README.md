@@ -1,290 +1,253 @@
-# Agora
+# Ágora — Plataforma de Gestión de Servicios y Pedidos
 
-Plataforma web de gestión de servicios y pedidos que conecta clientes con proveedores especializados, con notificaciones automáticas por correo en cada cambio de estado del pedido.
+Aplicación web multi-rol que conecta clientes con proveedores de servicios, con gestión de inventario, flujo operativo completo y API REST funcional.
 
-Proyecto académico — Laboratorio WSGI · Instituto Tecnológico Metropolitano (ITM)
-
----
-
-## Tabla de contenidos
-
-- [Descripción](#descripción)
-- [Características](#características)
-- [Arquitectura](#arquitectura)
-- [Estructura del proyecto](#estructura-del-proyecto)
-- [Tecnologías](#tecnologías)
-- [Requisitos previos](#requisitos-previos)
-- [Instalación y ejecución](#instalación-y-ejecución)
-- [Configuración de entorno](#configuración-de-entorno)
-- [Modelos de datos](#modelos-de-datos)
-- [Flujo de operaciones](#flujo-de-operaciones)
-- [Equipo](#equipo)
+Proyecto académico — Materia Lógica de Programación · Instituto Tecnológico Metropolitano (ITM), 2026.
 
 ---
 
-## Descripción
+## 🗂️ Estado actual del proyecto
 
-Agora es una aplicación web multi-rol que gestiona el ciclo completo de un pedido de servicio: desde la solicitud del cliente hasta la facturación por parte del proveedor. Cada transición de estado dispara una notificación automática por correo electrónico al cliente.
-
-El sistema soporta cuatro categorías de servicio, cada una con su propio proveedor y flujo operativo:
-
-| Categoría         | Proveedor                          | Color de marca |
-|-------------------|------------------------------------|----------------|
-| Restaurante       | Comida a domicilio                 | `#FF4757`      |
-| Servicios técnicos| Ferretería / técnicos del hogar    | `#FF6B35`      |
-| Farmacia          | Medicamentos e insumos de salud    | `#00B894`      |
-| Paquetería        | Empresa de envíos y mensajería     | `#5B7FFF`      |
-
----
-
-## Características
-
-**Panel del cliente**
-- Catálogo de servicios filtrable por categoría
-- Formulario de pedido con dirección y correo de contacto
-- Historial de pedidos con línea de tiempo de estados
-- Seguimiento en tiempo real del estado del envío
-- Calificación del servicio al finalizar (estrellas y comentario)
-
-**Panel del proveedor**
-- Selector de perfil al ingresar (restaurante, técnico, farmacia, paquetería)
-- Dashboard con KPIs del día y alertas de stock
-- Gestión de pedidos entrantes: aceptar, rechazar, actualizar estado
-- Control de inventario con alertas de stock mínimo
-- Flujo de operaciones para farmacia y paquetería: picking, packing y facturación
-
-**Notificaciones automáticas**
-- Correo al cliente en cada transición de estado del pedido
-- Correo al proveedor cuando el stock de un producto baja del mínimo definido
+| Componente | Estado | Detalle |
+|---|---|---|
+| Frontend (HTML/CSS/JS) | ✅ Implementado | Landing, login, paneles cliente y proveedor, flujo operativo |
+| API REST (Flask) | ✅ Implementado | 8 endpoints en 3 blueprints, SQLite, autenticación con hash |
+| Modelos de datos | ✅ Implementado | 4 modelos con relaciones y cascade |
+| Tema claro/oscuro | ✅ Implementado | Persistido en `localStorage` |
+| Base de datos relacional (PostgreSQL) | 🔜 Planeado | Actualmente SQLite vía SQLAlchemy |
+| Tareas asíncronas (Celery + Redis) | 🔜 Planeado | No implementado |
+| Notificaciones por correo (Gmail SMTP) | 🔜 Planeado | No implementado |
+| Servidor WSGI de producción (Gunicorn) | 🔜 Planeado | Actualmente Flask dev server |
+| Calificaciones de servicio | 🔜 Planeado | No implementado |
 
 ---
 
-## Arquitectura
+## ✨ Características implementadas
 
-```
-Cliente (navegador)
-        |
-        | HTTP
-        v
-   Flask / Gunicorn          <- servidor WSGI
-        |
-        |-- PostgreSQL        <- base de datos relacional
-        |-- Redis             <- broker de mensajes
-        |-- Celery Worker     <- tareas asíncronas (correos)
-        |-- Gmail SMTP        <- envío de notificaciones
-```
+### Frontend
 
-Todos los servicios se orquestan con Docker Compose.
+- **Landing page** (`index.html`) — presentación de las cuatro categorías de servicio
+- **Autenticación** (`pages/login.html`) — selección de rol (cliente / proveedor) y categoría
+- **Panel del cliente** (`pages/cliente.html`) — catálogo de servicios, creación y seguimiento de pedidos
+- **Panel del proveedor** (`pages/proveedor.html`) — gestión de pedidos entrantes, control de inventario
+- **Dashboard de inventario** (`pages/dashboard.html`) — KPIs, alertas de stock mínimo
+- **Flujo operativo** (`pages/picking.html`, `pages/packing.html`, `pages/facturacion.html`) — operaciones internas del proveedor
+- **Sistema de tema** (`js/tema.js`) — modo claro/oscuro con persistencia en `localStorage`
+
+Las cuatro categorías de servicio soportadas:
+
+| Categoría | Descripción |
+|---|---|
+| Restaurante | Comida a domicilio |
+| Servicios técnicos | Ferretería / técnicos del hogar |
+| Farmacia | Medicamentos e insumos de salud |
+| Paquetería | Empresa de envíos y mensajería |
+
+### Backend
+
+API REST construida con Flask + SQLAlchemy, organizada en tres blueprints:
+
+**Autenticación** (`/api/auth`)
+- Registro de usuarios con hash seguro de contraseña (`werkzeug`), validación de rol y categoría
+- Login con verificación de credenciales
+
+**Pedidos** (`/api/pedidos`)
+- Creación de pedidos con múltiples ítems (líneas de detalle)
+- Listado de pedidos filtrado por cliente o proveedor
+- Cambio de estado del pedido a lo largo del ciclo de vida
+
+**Inventario** (`/api/productos`)
+- Listado de productos con filtros por categoría y proveedor
+- Creación de productos
+- Edición parcial de productos (precio, stock, estado activo)
+
+---
+
+## 🔌 API REST
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `GET` | `/api/health` | Health check del servidor |
+| `POST` | `/api/auth/registro` | Registro de usuario (rol, categoría, hash de password) |
+| `POST` | `/api/auth/login` | Login con verificación de credenciales |
+| `POST` | `/api/pedidos/` | Crear pedido con detalles (múltiples ítems) |
+| `GET` | `/api/pedidos/?cliente_id=X` | Listar pedidos de un cliente |
+| `GET` | `/api/pedidos/?proveedor_id=X` | Listar pedidos de un proveedor |
+| `PUT` | `/api/pedidos/<id>/estado` | Cambiar estado de un pedido |
+| `GET` | `/api/productos/?categoria=X&proveedor_id=Y` | Listar productos con filtros opcionales |
+| `POST` | `/api/productos/` | Crear producto |
+| `PUT` | `/api/productos/<id>` | Editar producto (actualizaciones parciales) |
+
+---
+
+## 🗃️ Modelos de datos
+
+**`Usuario`**
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id` | Integer PK | Identificador |
+| `nombre` | String(120) | Nombre completo |
+| `usuario` | String(80) unique | Nombre de usuario |
+| `email` | String(200) unique | Correo electrónico |
+| `password_hash` | String(256) | Hash de contraseña (werkzeug) |
+| `rol` | String(20) | `cliente` o `proveedor` |
+| `categoria_proveedor` | String(30) | `restaurante`, `tecnico`, `farmacia`, `paqueteria` |
+
+**`Producto`**
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id` | Integer PK | Identificador |
+| `nombre` | String(200) | Nombre del producto |
+| `precio` | Float | Precio unitario |
+| `stock` | Integer | Unidades disponibles |
+| `stock_minimo` | Integer | Umbral de alerta (default: 5) |
+| `categoria` | String(30) | Categoría del proveedor |
+| `proveedor_id` | FK → usuarios | Proveedor propietario |
+| `activo` | Boolean | Visible en catálogo |
+
+**`Pedido`**
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id` | Integer PK | Identificador |
+| `cliente_id` | FK → usuarios | Cliente que solicita |
+| `proveedor_id` | FK → usuarios | Proveedor asignado |
+| `estado` | String(20) | `recibido` → `aceptado` → `preparando` → `en_camino` → `entregado` / `cancelado` |
+| `total` | Float | Monto total calculado |
+| `direccion` | String(300) | Dirección de entrega |
+
+**`DetallePedido`**
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id` | Integer PK | Identificador |
+| `pedido_id` | FK → pedidos (cascade) | Pedido padre |
+| `producto_id` | FK → productos | Producto incluido |
+| `cantidad` | Integer | Unidades |
+| `precio_unitario` | Float | Precio al momento del pedido |
+
+---
+
+## ⚙️ Stack técnico
+
+### Implementado actualmente
+
+| Tecnología | Rol |
+|---|---|
+| HTML5 / CSS3 | Estructura y estilos de todas las vistas |
+| JavaScript vanilla | Lógica del cliente, sin frameworks ni dependencias |
+| Flask | Framework web del servidor |
+| Flask-SQLAlchemy | ORM — mapeo de modelos a base de datos |
+| Flask-CORS | Habilitación de CORS para peticiones del frontend |
+| Werkzeug | Hash seguro de contraseñas |
+| SQLite | Base de datos embebida (desarrollo) |
+
+### Roadmap / próximos pasos
+
+| Tecnología | Propósito |
+|---|---|
+| PostgreSQL | Reemplazar SQLite en entornos de producción |
+| Gunicorn | Servidor WSGI para despliegue productivo |
+| Celery + Redis | Tareas asíncronas (notificaciones por correo) |
+| Gmail SMTP | Envío de correos en cambios de estado del pedido |
+| Docker Compose | Orquestación del stack completo |
+
+---
+
+## Instalación y ejecución
+
+### Frontend
+
+1. Clonar el repositorio:
+   ```bash
+   git clone <url-del-repositorio>
+   cd Agora
+   ```
+
+2. Abrir `index.html` directamente en el navegador, o usar Live Server en VS Code:
+   - Instalar la extensión **Live Server**
+   - Clic derecho sobre `index.html` → `Open with Live Server`
+   - Disponible en `http://127.0.0.1:5500`
+
+### Backend
+
+1. Crear y activar el entorno virtual:
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate        # Linux / macOS
+   venv\Scripts\activate           # Windows
+   ```
+
+2. Instalar dependencias:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Iniciar el servidor:
+   ```bash
+   python app.py
+   ```
+   La API queda disponible en `http://localhost:5000`. La base de datos SQLite (`agora.db`) se crea automáticamente en el primer arranque.
+
+> **Nota:** el archivo `docker-compose.yml` está incluido en el repositorio como base para el despliegue futuro con PostgreSQL + Redis + Celery. El stack Docker completo **no está operativo** en la versión actual.
 
 ---
 
 ## Estructura del proyecto
 
 ```
-Proyecto/
-├── index.html                  # Landing page
+Agora/
+├── index.html                      # Landing page
 ├── css/
-│   └── styles.css              # Hoja de estilos global compartida
+│   └── styles.css                  # Hoja de estilos global
 ├── js/
-│   ├── tema.js                 # Gestor de tema claro/oscuro (persistido en localStorage)
-│   ├── login.js                # Lógica de autenticación y selección de rol
-│   ├── picking.js              # Interacciones del flujo de picking
-│   └── facturacion.js          # Interacciones del flujo de facturación
+│   ├── tema.js                     # Gestor de tema claro/oscuro
+│   ├── login.js                    # Lógica de autenticación
+│   ├── picking.js                  # Interacciones del flujo de picking
+│   └── facturacion.js              # Interacciones del flujo de facturación
 ├── pages/
-│   ├── login.html              # Inicio de sesión con selección de rol
-│   ├── cliente.html            # Panel del cliente (catálogo, pedidos, seguimiento)
-│   ├── proveedor.html          # Panel del proveedor (pedidos, inventario, operaciones)
-│   ├── dashboard.html          # Dashboard de inventario avanzado
-│   ├── picking.html            # Operación de picking
-│   ├── packing.html            # Operación de packing
-│   └── facturacion.html        # Operación de facturación y cierre
+│   ├── login.html                  # Inicio de sesión con selección de rol
+│   ├── cliente.html                # Panel del cliente
+│   ├── proveedor.html              # Panel del proveedor
+│   ├── dashboard.html              # Dashboard de inventario
+│   ├── picking.html                # Operación de picking
+│   ├── packing.html                # Operación de packing
+│   └── facturacion.html            # Facturación y cierre
 ├── imagenes/
 │   ├── logo/
-│   │   ├── agoraN.png          # Logo tema claro
-│   │   └── agoraO.png          # Logo tema oscuro
+│   │   ├── agoraN.png              # Logo tema claro
+│   │   └── agoraO.png              # Logo tema oscuro
 │   ├── comida.jpg
 │   ├── electricista.jpg
 │   ├── farmacia.jpg
 │   └── paquetes.jpg
-├── docker-compose.yml
+├── backend/
+│   ├── app.py                      # Punto de entrada Flask, registro de blueprints
+│   ├── models.py                   # Modelos SQLAlchemy
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   └── routes/
+│       ├── auth.py                 # Blueprint /api/auth
+│       ├── pedidos.py              # Blueprint /api/pedidos
+│       └── inventario.py           # Blueprint /api/productos
+├── DiagramaFlujo/
+│   └── Agora.drawio
+├── docker-compose.yml              # Configuración futura de despliegue
 └── README.md
-```
-
----
-
-## Tecnologías
-
-### Frontend (implementado)
-
-| Tecnología      | Uso                                              |
-|-----------------|--------------------------------------------------|
-| HTML5           | Estructura semántica de todas las vistas         |
-| CSS3 puro       | Estilos globales, variables, modo oscuro, responsive |
-| JavaScript vanilla | Lógica del cliente sin dependencias externas |
-| Google Fonts    | Syne (títulos) y DM Sans (cuerpo)                |
-
-### Backend (por implementar con el profesor)
-
-| Tecnología    | Uso                                                |
-|---------------|----------------------------------------------------|
-| Python 3      | Lenguaje principal del servidor                    |
-| Flask         | Framework web ligero                               |
-| Gunicorn      | Servidor WSGI en producción                        |
-| PostgreSQL    | Base de datos relacional                           |
-| SQLAlchemy    | ORM para interacción con la base de datos          |
-| Celery        | Cola de tareas para envío asíncrono de correos     |
-| Redis         | Broker de mensajes para Celery                     |
-| smtplib       | Envío de correos via Gmail SMTP                    |
-| Docker Compose| Orquestación de todos los servicios                |
-
----
-
-## Requisitos previos
-
-Para ejecutar solo el frontend no se requiere ninguna dependencia adicional.
-
-Para ejecutar el stack completo con Docker:
-
-- [Docker](https://docs.docker.com/get-docker/) >= 24.x
-- [Docker Compose](https://docs.docker.com/compose/install/) >= 2.x
-
----
-
-## Instalación y ejecución
-
-### Frontend (sin servidor)
-
-1. Clonar el repositorio:
-   ```bash
-   git clone <url-del-repositorio>
-   cd Logica2026-1/Proyecto
-   ```
-
-2. Abrir `index.html` directamente en el navegador, o usar Live Server en VS Code:
-   - Instalar la extensión **Live Server** en VS Code
-   - Clic derecho sobre `index.html` > `Open with Live Server`
-   - La aplicación quedará disponible en `http://127.0.0.1:5500`
-
-### Stack completo con Docker
-
-1. Configurar las variables de entorno (ver sección [Configuración de entorno](#configuración-de-entorno)).
-
-2. Levantar todos los servicios:
-   ```bash
-   docker compose up --build
-   ```
-
-3. La aplicación estará disponible en `http://localhost:5000`.
-
-4. Para detener los servicios:
-   ```bash
-   docker compose down
-   ```
-
-### Contenedores definidos en `docker-compose.yml`
-
-| Servicio | Descripción                          |
-|----------|--------------------------------------|
-| `web`    | Aplicación Flask servida con Gunicorn|
-| `db`     | Base de datos PostgreSQL             |
-| `redis`  | Broker de mensajes para Celery       |
-| `worker` | Celery worker para envío de correos  |
-
----
-
-## Configuración de entorno
-
-Crear un archivo `.env` en la raíz del proyecto con las siguientes variables:
-
-```env
-# Base de datos
-DATABASE_URL=postgresql://usuario:contraseña@db:5432/agora
-
-# Correo (Gmail SMTP)
-MAIL_SERVER=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=agora.itm.grupo@gmail.com
-MAIL_PASSWORD=xxxx xxxx xxxx xxxx
-
-# Celery / Redis
-CELERY_BROKER_URL=redis://redis:6379/0
-CELERY_RESULT_BACKEND=redis://redis:6379/0
-
-# Flask
-FLASK_ENV=development
-SECRET_KEY=cambiar-en-produccion
-```
-
-> El archivo `.env` no debe subirse al repositorio. Verificar que este listado en `.gitignore`.
-
----
-
-## Modelos de datos
-
-Esquema relacional planeado para la implementación del backend:
-
-```
-Usuario
-  id, nombre, email, password_hash, rol (cliente | proveedor)
-
-Proveedor
-  id, nombre, categoria, usuario_id (FK), calificacion_promedio
-
-Producto
-  id, nombre, descripcion, precio, stock, stock_minimo, proveedor_id (FK), categoria
-
-Pedido
-  id, cliente_id (FK), proveedor_id (FK), estado, total, fecha_creacion
-
-DetallePedido
-  id, pedido_id (FK), producto_id (FK), cantidad, precio_unitario
-
-Calificacion
-  id, pedido_id (FK), cliente_id (FK), estrellas, comentario, fecha
-
-Notificacion
-  id, pedido_id (FK), destinatario_email, tipo_evento, fecha_envio
-```
-
----
-
-## Flujo de operaciones
-
-### Estados del pedido y correos asociados
-
-```
-Pedido recibido       ->  Correo: "Tu solicitud fue confirmada"
-        |
-Proveedor asignado    ->  Correo: "Te asignamos un proveedor"
-        |
-En camino / servicio  ->  Correo: "Tu pedido va en camino"
-        |
-Entregado             ->  Correo: "Pedido entregado, califica tu experiencia"
-        |
-Calificado            ->  El cliente puntua con estrellas y comentario
-```
-
-### Flujo interno del proveedor (farmacia y paquetería)
-
-```
-Pedido aceptado
-        |
-     Picking          ->  El operario recolecta los productos del inventario
-        |
-     Packing          ->  Se empaca, se registra peso y se etiqueta
-        |
-  Facturacion         ->  Se emite la factura y se registra la salida del inventario
 ```
 
 ---
 
 ## Equipo
 
-| Nombre       | Rol                        |
-|--------------|----------------------------|
-| Yesica       | Desarrollo frontend        |
-| Daniel       | Desarrollo frontend        |
-| Tomas        | Desarrollo frontend        |
-| Juan Manuel  | Desarrollo frontend        |
+Proyecto desarrollado en equipo para la materia Lógica de Programación del ITM, 2026.
 
-Proyecto supervisado por el docente de la materia Logica de Programación — ITM, 2026.
+| Integrante | Rol principal |
+|---|---|
+| Tomás Pérez | Arquitectura, backend (Flask, SQLAlchemy, Docker), frontend |
+| Yesica | Frontend |
+| Daniel | Frontend |
+| Juan Manuel | Frontend |
