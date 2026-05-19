@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ágora — Facturación</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/tema.js"></script>
+  <style>
+    .steps {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 16px 24px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-400);
+    }
+    .step + .step::before { content: '›'; margin: 0 10px; color: var(--gray-200); font-size: 18px; font-weight: 400; }
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 2px solid var(--gray-200);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--gray-400); flex-shrink: 0;
+    }
+    .step.done { color: var(--col-farmacia-dark); }
+    .step.done .step-num { background: var(--col-farmacia); border-color: var(--col-farmacia); color: #fff; }
+    .step.active { color: var(--gray-900); }
+    .step.active .step-num { background: var(--gray-900); border-color: var(--gray-900); color: #fff; }
+    html[data-theme="dark"] .step.active .step-num { background: var(--gray-900); border-color: var(--gray-900); color: #1C1B19; }
+
+    .factura-grid {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 20px;
+      align-items: start;
+    }
+    .panel-card {
+      background: #fff;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .panel-card:last-child { margin-bottom: 0; }
+    .panel-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-card-title { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+    .panel-card-meta  { font-size: 12px; color: var(--gray-600); }
+    .caja-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 14px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .caja-row:last-of-type { border-bottom: none; }
+    .caja-id     { font-size: 13px; font-weight: 600; color: var(--gray-900); margin-bottom: 2px; }
+    .caja-detail { font-size: 12px; color: var(--gray-600); }
+    .caja-estado {
+      font-size: 12px; font-weight: 500;
+      padding: 4px 12px; border-radius: 100px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .estado-proceso  { background: #FFF0EB; color: var(--col-tecnico-dark); }
+    .estado-despacho { background: var(--col-farmacia-soft); color: var(--col-farmacia-dark); }
+    .nota-retiro {
+      margin: 16px 20px 20px;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 12px; color: var(--gray-600); line-height: 1.55;
+    }
+    .resumen-section { padding: 20px; }
+    .resumen-section + .resumen-section { border-top: 1px solid var(--gray-200); }
+    .resumen-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .resumen-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; gap: 16px; }
+    .resumen-label { font-size: 13px; color: var(--gray-600); }
+    .resumen-val   { font-size: 13px; font-weight: 600; }
+    .resumen-total-label { font-size: 15px; font-weight: 700; }
+    .resumen-total { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+    .divider { border: none; border-top: 1px solid var(--gray-200); margin: 12px 0; }
+    .btn-full { width: 100%; justify-content: center; margin-bottom: 8px; }
+
+    .confirm-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .confirm-overlay.show { display: flex; }
+    .confirm-modal {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 40px 36px;
+      width: 100%; max-width: 420px;
+      margin: 20px;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .confirm-icon {
+      width: 60px; height: 60px;
+      background: var(--col-farmacia-soft);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .confirm-icon svg { width: 28px; height: 28px; fill: var(--col-farmacia); }
+    .confirm-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 12px; }
+    .confirm-text  { font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-bottom: 28px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+    .confirm-actions .btn { flex: 1; justify-content: center; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">
+      <img id="logo-img" src="../imagenes/logo/agoraN.png" alt="Ágora" style="height:48px;vertical-align:middle">
+    </a>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="menu-toggle" onclick="toggleSidebar()" title="Menú">☰</button>
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTema()" aria-label="Activar modo oscuro"></button>
+    </div>
+  </nav>
+
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">Proveedor</div>
+      <a href="dashboard.html" class="sidebar-item"><span class="sidebar-icon">📊</span> Dashboard</a>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">📋</span> Pedidos</a>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">📦</span> Inventario</a>
+
+      <div class="sidebar-section">Operaciones</div>
+      <a href="picking.html" class="sidebar-item"><span class="sidebar-icon">🔍</span> Picking</a>
+      <a href="packing.html" class="sidebar-item"><span class="sidebar-icon">📫</span> Packing</a>
+      <a href="facturacion.html" class="sidebar-item activo"><span class="sidebar-icon">🧾</span> Facturación</a>
+
+      <div class="sidebar-section">Administración</div>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">➕</span> Agregar producto</a>
+
+      <div style="margin-top:auto;padding-top:24px;border-top:1px solid var(--gray-200)">
+        <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">←</span> Volver a proveedor</a>
+      </div>
+    </aside>
+
+    <main class="main-content" id="main-content"></main>
+  </div>
+
+  <!-- Modal — id y clase .show requeridos por facturacion.js -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-modal">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      </div>
+      <div class="confirm-title" id="modal-title">Operación completada</div>
+      <div class="confirm-text"  id="modal-text">La operación fue registrada exitosamente.</div>
+      <div class="confirm-actions">
+        <button class="btn btn-outline" onclick="window.location='proveedor.html'">Ver pedidos</button>
+        <button class="btn btn-dark"    onclick="window.location='dashboard.html'">Ir al dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var tipo = localStorage.getItem('proveedorActivo') || 'farmacia';
+      var ordenActual = localStorage.getItem('ordenActual');
+
+      var CFG = {
+        restaurante: {
+          title: 'Cierre de pedido',
+          ordenLabel: 'Pedido #1042',
+          subtitle: 'Confirma los platos entregados y cierra el pedido',
+          btnLabel: 'Confirmar entrega',
+          tableRows: [
+            { name: 'Combo Hamburguesa x2', qty: '2 combos',  price: '$28.000/ud',  total: '$56.000' },
+            { name: 'Gaseosa 400ml x3',     qty: '3 uds',     price: '$5.000/ud',   total: '$15.000' }
+          ],
+          showCajas: false,
+          resumen: { orden: '#PED-1042', fecha: '25/03/2026', operario: 'Juan Manuel', subtotal: '$71.000', iva: '$13.490', total: '$84.490' },
+          modalTitle: 'Pedido entregado',
+          modalText: 'El pedido <strong>#PED-{NUM}</strong> fue marcado como entregado exitosamente. El cliente fue notificado y el registro quedó guardado.'
+        },
+        farmacia: {
+          title: 'Facturación',
+          ordenLabel: 'Orden #1042',
+          subtitle: 'Confirma el detalle y emite la factura de salida',
+          btnLabel: 'Confirmar y emitir factura',
+          tableRows: [
+            { name: 'Ibuprofeno 400mg x10', qty: '10 unid.', price: '$850/ud',    total: '$8.500'  },
+            { name: 'Vitamina C 1000mg x2', qty: '2 unid.',  price: '$18.000/ud', total: '$36.000' }
+          ],
+          showCajas: true,
+          cajas: [
+            { id: 'MED-01', name: 'Caja MED-01 — Ibuprofeno 400mg x10', detail: '0.3 kg · Estante B2' },
+            { id: 'MED-02', name: 'Sobre MED-02 — Vitamina C 1000mg x2', detail: '0.1 kg · Estante A1' }
+          ],
+          resumen: { orden: '#1042', fecha: '25/03/2026', operario: 'Juan Manuel', subtotal: '$44.500', iva: '$8.455', total: '$52.955' },
+          modalTitle: 'Factura emitida',
+          modalText: 'La factura <strong>#F-2026-{NUM}</strong> fue generada exitosamente. Las cajas han sido retiradas del inventario activo y el registro de salida quedó guardado.'
+        },
+        paqueteria: {
+          title: 'Facturación',
+          ordenLabel: 'Orden #1042',
+          subtitle: 'Confirma el detalle y emite la factura de salida',
+          btnLabel: 'Confirmar y emitir factura',
+          tableRows: [
+            { name: 'Paquete PKT-041 — Zona norte', qty: '1 bulto', price: '$15.000', total: '$15.000' },
+            { name: 'Sobre DOC-012 — Centro',        qty: '1 sobre', price: '$9.000',  total: '$9.000'  }
+          ],
+          showCajas: true,
+          cajas: [
+            { id: 'PKT-041', name: 'Bulto PKT-041 — Zona norte', detail: '2.3 kg · Bodega zona norte' },
+            { id: 'DOC-012', name: 'Sobre DOC-012 — Centro',      detail: '0.1 kg · Mostrador principal' }
+          ],
+          resumen: { orden: '#1042', fecha: '25/03/2026', operario: 'Juan Manuel', subtotal: '$24.000', iva: '$4.560', total: '$28.560' },
+          modalTitle: 'Factura emitida',
+          modalText: 'La factura <strong>#F-2026-{NUM}</strong> fue generada exitosamente. Los bultos han sido marcados como despachados y el registro de salida quedó guardado.'
+        },
+        tecnico: {
+          title: 'Cierre del servicio',
+          ordenLabel: 'Servicio #1042',
+          subtitle: 'Confirma el trabajo realizado y cierra el servicio',
+          btnLabel: 'Confirmar servicio finalizado',
+          tableRows: [
+            { name: 'Revisión eléctrica residencial', qty: '2 horas',   price: '$27.500/h', total: '$55.000' },
+            { name: 'Materiales utilizados',           qty: 'Kit básico', price: '$15.000',   total: '$15.000' }
+          ],
+          showCajas: false,
+          resumen: { orden: '#SVC-1042', fecha: '25/03/2026', operario: 'Juan Manuel', subtotal: '$70.000', iva: '$13.300', total: '$83.300' },
+          modalTitle: 'Servicio finalizado',
+          modalText: 'El servicio <strong>#SVC-{NUM}</strong> fue registrado como completado. El informe de trabajo quedó guardado y el cliente fue notificado.'
+        }
+      };
+
+      var cfg = CFG[tipo] || CFG.farmacia;
+      var num = ordenActual ? ordenActual.replace('PED-', '') : '1042';
+      cfg.modalText = cfg.modalText.replace('{NUM}', num);
+
+      // Fecha dinámica
+      var hoy = new Date();
+      var fechaHoy = String(hoy.getDate()).padStart(2,'0') + '/' + String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear();
+      cfg.resumen.fecha = fechaHoy;
+
+      // Update modal text
+      document.getElementById('modal-title').textContent = cfg.modalTitle;
+      document.getElementById('modal-text').innerHTML   = cfg.modalText;
+
+      function renderCajas(cajas) {
+        return '<div class="panel-card">'
+          + '<div class="panel-card-header">'
+          + '<span class="panel-card-title">Cajas involucradas</span>'
+          + '<span class="panel-card-meta">Al facturar cambian a "despachado"</span>'
+          + '</div>'
+          + cajas.map(function(c) {
+            return '<div class="caja-row">'
+              + '<div><div class="caja-id">' + c.name + '</div><div class="caja-detail">' + c.detail + '</div></div>'
+              + '<span class="caja-estado estado-proceso" id="estado-' + c.id + '">En proceso</span>'
+              + '</div>';
+          }).join('')
+          + '<div class="nota-retiro"><strong>Nota:</strong> Al confirmar, las cajas cambian a estado <strong>despachado</strong>. Quedan en el historial con referencia a esta factura y fecha de salida.</div>'
+          + '</div>';
+      }
+
+      var stepsHTML = tipo === 'tecnico' || tipo === 'restaurante'
+        ? '<div class="steps fade-in-2">'
+          + '<div class="step done"><div class="step-num">✓</div>Servicio prestado</div>'
+          + '<div class="step active"><div class="step-num">2</div>Cierre y facturación</div>'
+          + '<div class="step"><div class="step-num">3</div>Registro final</div>'
+          + '</div>'
+        : '<div class="steps fade-in-2">'
+          + '<div class="step done"><div class="step-num">✓</div>Picking completado</div>'
+          + '<div class="step done"><div class="step-num">✓</div>Packing completado</div>'
+          + '<div class="step active"><div class="step-num">3</div>Facturación</div>'
+          + '<div class="step"><div class="step-num">4</div>Registro de salida</div>'
+          + '</div>';
+
+      var html = '<div class="page-header fade-in">'
+        + '<div>'
+        + '<h1>' + cfg.title + ' <span style="font-size:18px;font-weight:400;color:var(--gray-600)">— ' + (ordenActual || cfg.ordenLabel) + '</span></h1>'
+        + '<p>' + cfg.subtitle + '</p>'
+        + '</div>'
+        + '</div>'
+
+        + stepsHTML
+
+        + '<div class="factura-grid fade-in-3">'
+        + '<div>'
+
+        + '<div class="panel-card">'
+        + '<div class="panel-card-header"><span class="panel-card-title">Detalle de la orden</span></div>'
+        + '<table class="tabla"><thead><tr><th>Producto / Servicio</th><th>Cantidad</th><th>Precio unit.</th><th>Subtotal</th></tr></thead><tbody>'
+        + cfg.tableRows.map(function(r) {
+            return '<tr><td>' + r.name + '</td><td>' + r.qty + '</td><td>' + r.price + '</td><td style="font-weight:600">' + r.total + '</td></tr>';
+          }).join('')
+        + '</tbody></table>'
+        + '</div>'
+
+        + (cfg.showCajas ? renderCajas(cfg.cajas) : '')
+
+        + '</div>'
+
+        + '<div class="panel-card">'
+        + '<div class="resumen-section">'
+        + '<div class="resumen-title">Resumen</div>'
+        + '<div class="resumen-row"><span class="resumen-label">Orden</span><span class="resumen-val">' + (ordenActual || cfg.resumen.orden) + '</span></div>'
+        + '<div class="resumen-row"><span class="resumen-label">Fecha</span><span class="resumen-val">' + cfg.resumen.fecha + '</span></div>'
+        + '<div class="resumen-row"><span class="resumen-label">Operario</span><span class="resumen-val">' + cfg.resumen.operario + '</span></div>'
+        + '<hr class="divider">'
+        + '<div class="resumen-row"><span class="resumen-label">Subtotal</span><span class="resumen-val">' + cfg.resumen.subtotal + '</span></div>'
+        + '<div class="resumen-row"><span class="resumen-label">IVA (19%)</span><span class="resumen-val">' + cfg.resumen.iva + '</span></div>'
+        + '<hr class="divider">'
+        + '<div class="resumen-row"><span class="resumen-total-label">Total</span><span class="resumen-total">' + cfg.resumen.total + '</span></div>'
+        + '</div>'
+        + '<div class="resumen-section">'
+        + '<button class="btn btn-dark btn-full" onclick="confirmarFactura()">' + cfg.btnLabel + '</button>'
+        + (tipo !== 'tecnico' && tipo !== 'restaurante' ? '<button class="btn btn-outline btn-full" onclick="window.location=\'packing.html\'">Volver al packing</button>' : '<button class="btn btn-outline btn-full" onclick="window.location=\'proveedor.html\'">Volver a pedidos</button>')
+        + '</div>'
+        + '</div>'
+
+        + '</div>';
+
+      document.getElementById('main-content').innerHTML = html;
+    })();
+  </script>
+
+  <script src="../js/facturacion.js"></script>
+  <script>
+    // El overlay de éxito no se cierra con ESC/click fuera (es una acción completada),
+    // pero sí permitimos ESC en el contexto general de navegación
+    document.getElementById('confirm-overlay').addEventListener('click', function(e) {
+      // click en el overlay oscuro (fuera del modal) → ir al dashboard
+      if (e.target === this) window.location = 'dashboard.html';
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        var overlay = document.getElementById('confirm-overlay');
+        if (overlay.classList.contains('show')) window.location = 'dashboard.html';
+      }
+    });
+  </script>
+</body>
+</html>

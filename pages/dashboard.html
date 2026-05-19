@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ágora — Dashboard de inventario</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/tema.js"></script>
+  <style>
+    .panel-card {
+      background: #fff;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+    .panel-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-card-title  { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+    .panel-card-action { font-size: 13px; color: var(--col-paqueteria); font-weight: 500; }
+    .panels-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .alert-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 20px; border-bottom: 1px solid var(--gray-200);
+    }
+    .alert-item:last-child { border-bottom: none; }
+    .alert-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .alert-dot.danger  { background: #E24B4A; }
+    .alert-dot.warning { background: var(--col-tecnico); }
+    .alert-text { font-size: 13px; font-weight: 500; color: var(--gray-900); margin-bottom: 2px; }
+    .alert-time { font-size: 11px; color: var(--gray-400); }
+    .actions-row { display: flex; gap: 10px; margin-bottom: 32px; flex-wrap: wrap; }
+    .action-card {
+      display: flex; align-items: center; gap: 12px;
+      background: #fff; border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-md); padding: 14px 20px;
+      font-size: 14px; font-weight: 500; color: var(--gray-900);
+      cursor: pointer; transition: all 0.15s; text-decoration: none;
+    }
+    .action-card:hover { border-color: var(--gray-600); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .action-icon { font-size: 20px; }
+    .action-sub  { font-size: 12px; color: var(--gray-600); font-weight: 400; }
+    .header-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #FFEAEB; color: #CC1A2A;
+      font-size: 12px; font-weight: 600;
+      padding: 6px 12px; border-radius: 100px;
+    }
+    .header-badge.info {
+      background: var(--col-paqueteria-soft); color: var(--col-paqueteria-dark);
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">
+      <img id="logo-img" src="../imagenes/logo/agoraN.png" alt="Ágora" style="height:48px;vertical-align:middle">
+    </a>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="menu-toggle" onclick="toggleSidebar()" title="Menú">☰</button>
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTema()" aria-label="Activar modo oscuro"></button>
+    </div>
+  </nav>
+
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">Proveedor</div>
+      <a href="dashboard.html" class="sidebar-item activo"><span class="sidebar-icon">📊</span> Dashboard</a>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">📋</span> Pedidos</a>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">📦</span> Inventario</a>
+
+      <div class="sidebar-section">Operaciones</div>
+      <a href="picking.html" class="sidebar-item"><span class="sidebar-icon">🔍</span> Picking</a>
+      <a href="packing.html" class="sidebar-item"><span class="sidebar-icon">📫</span> Packing</a>
+      <a href="facturacion.html" class="sidebar-item"><span class="sidebar-icon">🧾</span> Facturación</a>
+
+      <div class="sidebar-section">Administración</div>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">➕</span> Agregar producto</a>
+
+      <div style="margin-top:auto;padding-top:24px;border-top:1px solid var(--gray-200)">
+        <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">←</span> Volver a proveedor</a>
+      </div>
+    </aside>
+
+    <main class="main-content" id="main-content"></main>
+  </div>
+
+  <script>
+    (function () {
+      var tipo = localStorage.getItem('proveedorActivo') || 'farmacia';
+
+      var CFG = {
+        restaurante: {
+          pageTitle: 'Dashboard',
+          pageSubtitle: 'Resumen operacional del día',
+          badge: { text: '⚠ 3 alertas de stock', cls: 'header-badge' },
+          kpis: [
+            { label: 'Pedidos hoy',   value: '14', sub: '3 en preparación',  color: 'var(--col-farmacia)' },
+            { label: 'Platos activos', value: '8',  sub: 'En carta',          color: 'var(--gray-900)' },
+            { label: 'Stock bajo',    value: '3',  sub: 'Ingredientes',       color: 'var(--col-tecnico)' },
+            { label: 'Sin stock',     value: '1',  sub: 'Fuera de carta',     color: '#E24B4A' }
+          ],
+          actions: [
+            { icon: '➕', label: 'Nuevo pedido',    sub: 'Crear pedido manual',    href: 'proveedor.html' },
+            { icon: '🔍', label: 'Ver pedidos',      sub: '3 en preparación',       href: 'proveedor.html' },
+            { icon: '📦', label: 'Ver inventario',   sub: 'Estado de ingredientes', href: 'proveedor.html' }
+          ],
+          leftPanelTitle: 'Alertas de stock',
+          alerts: [
+            { level: 'danger',  text: 'Papas fritas — Sin stock',                         time: 'Hace 5 minutos'  },
+            { level: 'warning', text: 'Pan brioche — Stock bajo (3 uds, mín: 20)',         time: 'Hace 30 minutos' },
+            { level: 'warning', text: 'Pollo Broaster — Stock bajo (2 porciones, mín: 8)', time: 'Hace 1 hora'     }
+          ],
+          orders: [
+            { id: '#PED-007', product: 'Combo Hamburguesa x2',  statusClass: 'estado-preparando', label: 'Preparando' },
+            { id: '#PED-008', product: 'Pizza Margarita',        statusClass: 'estado-en-camino',  label: 'En camino'  },
+            { id: '#PED-009', product: 'Pollo Broaster x2',      statusClass: 'estado-entregado',  label: 'Entregado'  },
+            { id: '#PED-010', product: 'Gaseosa 400ml x3',       statusClass: 'estado-recibido',   label: 'Pendiente'  },
+            { id: '#PED-011', product: 'Combo Familiar',          statusClass: 'estado-cancelado',  label: 'Cancelado'  }
+          ]
+        },
+        farmacia: {
+          pageTitle: 'Dashboard',
+          pageSubtitle: 'Resumen operacional del día',
+          badge: { text: '⚠ 2 alertas de stock', cls: 'header-badge' },
+          kpis: [
+            { label: 'Órdenes hoy',       value: '12', sub: '3 en proceso',         color: 'var(--col-farmacia)' },
+            { label: 'Productos activos', value: '34', sub: 'En inventario',         color: 'var(--gray-900)'    },
+            { label: 'Stock bajo',        value: '3',  sub: 'Requieren reposición',  color: 'var(--col-tecnico)' },
+            { label: 'Stock excedido',    value: '1',  sub: 'No reponer',            color: '#E24B4A'            }
+          ],
+          actions: [
+            { icon: '➕', label: 'Nueva orden',      sub: 'Crear pedido',           href: 'proveedor.html' },
+            { icon: '🔍', label: 'Iniciar picking',   sub: '3 órdenes pendientes',   href: 'picking.html'   },
+            { icon: '📦', label: 'Ver inventario',    sub: 'Estado del stock',        href: 'proveedor.html' }
+          ],
+          leftPanelTitle: 'Alertas de stock',
+          alerts: [
+            { level: 'danger',  text: 'Ibuprofeno 400mg — Stock bajo (8 uds, mín: 30)',         time: 'Hace 25 minutos' },
+            { level: 'danger',  text: 'Kit primeros auxilios — Stock crítico (2 uds, mín: 10)', time: 'Hace 40 minutos' },
+            { level: 'warning', text: 'Vitamina C 1000mg — Stock bajo (6 uds, mín: 20)',         time: 'Hace 1 hora'     },
+            { level: 'warning', text: 'Antihistamínico — Stock excedido (120 uds, máx: 50)',      time: 'Hace 2 horas'    }
+          ],
+          orders: [
+            { id: '#1042', product: 'Ibuprofeno 400mg x10',  statusClass: 'estado-preparando', label: 'Picking'   },
+            { id: '#1041', product: 'Vitamina C 1000mg x2',  statusClass: 'estado-en-camino',  label: 'Packing'   },
+            { id: '#1040', product: 'Kit primeros auxilios',  statusClass: 'estado-entregado',  label: 'Facturada' },
+            { id: '#1039', product: 'Antihistamínico x5',     statusClass: 'estado-entregado',  label: 'Facturada' },
+            { id: '#1038', product: 'Ibuprofeno 400mg x20',   statusClass: 'estado-recibido',   label: 'Pendiente' }
+          ]
+        },
+        paqueteria: {
+          pageTitle: 'Dashboard',
+          pageSubtitle: 'Resumen operacional del día',
+          badge: { text: '⚠ 2 alertas de insumos', cls: 'header-badge' },
+          kpis: [
+            { label: 'Órdenes hoy',       value: '31', sub: '4 en proceso',        color: 'var(--col-farmacia)' },
+            { label: 'Materiales activos', value: '12', sub: 'En inventario',        color: 'var(--gray-900)'    },
+            { label: 'Stock bajo',         value: '2',  sub: 'Requieren reposición', color: 'var(--col-tecnico)' },
+            { label: 'Sin alertas',        value: '0',  sub: 'Todo OK',              color: 'var(--col-farmacia)'}
+          ],
+          actions: [
+            { icon: '➕', label: 'Nueva orden',     sub: 'Crear envío',             href: 'proveedor.html' },
+            { icon: '🔍', label: 'Iniciar picking',  sub: '4 órdenes pendientes',    href: 'picking.html'   },
+            { icon: '📦', label: 'Ver inventario',   sub: 'Estado de materiales',    href: 'proveedor.html' }
+          ],
+          leftPanelTitle: 'Alertas de insumos',
+          alerts: [
+            { level: 'danger',  text: 'Sobres medianos — Stock bajo (5 uds, mín: 50)',   time: 'Hace 15 minutos' },
+            { level: 'warning', text: 'Cinta de embalaje — Stock bajo (2 rollos, mín: 10)', time: 'Hace 1 hora'    }
+          ],
+          orders: [
+            { id: '#PKT-042', product: 'Paquete PKT-041 — Zona norte', statusClass: 'estado-preparando', label: 'Picking'    },
+            { id: '#PKT-041', product: 'Sobre DOC-012 — Centro',        statusClass: 'estado-en-camino',  label: 'Packing'    },
+            { id: '#PKT-040', product: 'Bulto PKT-039 — Zona sur',      statusClass: 'estado-entregado',  label: 'Facturado'  },
+            { id: '#PKT-039', product: 'Sobre DOC-011 — Norte',          statusClass: 'estado-entregado',  label: 'Entregado'  },
+            { id: '#PKT-038', product: 'Carga PKT-038 — Especial',       statusClass: 'estado-recibido',   label: 'Pendiente'  }
+          ]
+        },
+        tecnico: {
+          pageTitle: 'Dashboard',
+          pageSubtitle: 'Resumen operacional del día',
+          badge: null,
+          kpis: [
+            { label: 'Técnicos disponibles', value: '3', sub: 'Listos para asignar', color: 'var(--col-farmacia)' },
+            { label: 'Servicios en curso',   value: '2', sub: 'En campo',             color: 'var(--col-tecnico)' },
+            { label: 'Servicios hoy',        value: '8', sub: '+2 desde ayer',        color: 'var(--gray-900)'    },
+            { label: 'Finalizados',          value: '5', sub: '100% confirmados',     color: 'var(--col-farmacia)'}
+          ],
+          actions: [
+            { icon: '➕', label: 'Nuevo servicio', sub: 'Asignar técnico',    section: 'nuevo-producto' },
+            { icon: '📋', label: 'Ver servicios',  sub: 'Historial completo', section: 'pedidos'        }
+          ],
+          leftPanelTitle: 'Disponibilidad del equipo',
+          alerts: [],
+          disponibilidad: [
+            { label: 'Juan Manuel — Plomería',        status: 'Disponible',  statusClass: 'estado-entregado'  },
+            { label: 'Carlos Ruiz — Electricidad',    status: 'En servicio', statusClass: 'estado-preparando' },
+            { label: 'Ana Gómez — Cerrajería',        status: 'Disponible',  statusClass: 'estado-entregado'  },
+            { label: 'Pedro García — Gasfitería',     status: 'Disponible',  statusClass: 'estado-entregado'  },
+            { label: 'Luis Mora — Electricidad',      status: 'En servicio', statusClass: 'estado-preparando' }
+          ],
+          orders: [
+            { id: '#SVC-010', product: 'Revisión eléctrica residencial', statusClass: 'estado-preparando', label: 'En curso'   },
+            { id: '#SVC-009', product: 'Plomería general',               statusClass: 'estado-en-camino',  label: 'En camino'  },
+            { id: '#SVC-008', product: 'Cerrajería 24h',                 statusClass: 'estado-entregado',  label: 'Finalizado' },
+            { id: '#SVC-007', product: 'Electricidad — Luis Mora',       statusClass: 'estado-entregado',  label: 'Finalizado' },
+            { id: '#SVC-006', product: 'Plomería — Carlos Ruiz',         statusClass: 'estado-recibido',   label: 'Pendiente'  }
+          ]
+        }
+      };
+
+      var cfg = CFG[tipo] || CFG.farmacia;
+
+      // Left panel content: alerts OR disponibilidad
+      var leftPanelBody = '';
+      if (tipo === 'tecnico' && cfg.disponibilidad) {
+        leftPanelBody = cfg.disponibilidad.map(function(d) {
+          return '<div class="alert-item">'
+            + '<div style="flex:1"><div class="alert-text">' + d.label + '</div></div>'
+            + '<span class="estado-pill ' + d.statusClass + '">' + d.status + '</span>'
+            + '</div>';
+        }).join('');
+      } else if (cfg.alerts.length > 0) {
+        leftPanelBody = cfg.alerts.map(function(a) {
+          return '<div class="alert-item">'
+            + '<div class="alert-dot ' + a.level + '"></div>'
+            + '<div><div class="alert-text">' + a.text + '</div><div class="alert-time">' + a.time + '</div></div>'
+            + '</div>';
+        }).join('');
+      } else {
+        leftPanelBody = '<div style="padding:20px;font-size:13px;color:var(--gray-400)">Sin alertas activas.</div>';
+      }
+
+      var badgeHTML = cfg.badge
+        ? '<span class="' + cfg.badge.cls + '">' + cfg.badge.text + '</span>'
+        : '';
+
+      var html = '<div class="page-header fade-in">'
+        + '<div><h1>' + cfg.pageTitle + '</h1><p>' + cfg.pageSubtitle + '</p></div>'
+        + badgeHTML
+        + '</div>'
+
+        + '<div class="stats-grid fade-in-2">'
+        + cfg.kpis.map(function(k) {
+            return '<div class="stat-card">'
+              + '<div class="stat-label">' + k.label + '</div>'
+              + '<div class="stat-value" style="color:' + k.color + '">' + k.value + '</div>'
+              + '<div class="stat-sub">' + k.sub + '</div>'
+              + '</div>';
+          }).join('')
+        + '</div>'
+
+        + '<div class="actions-row fade-in-3">'
+        + cfg.actions.map(function(a) {
+            var dest = a.section
+              ? 'javascript:goToProvSection(\'' + a.section + '\')'
+              : a.href;
+            return '<a href="' + dest + '" class="action-card">'
+              + '<span class="action-icon">' + a.icon + '</span>'
+              + '<div><div>' + a.label + '</div><div class="action-sub">' + a.sub + '</div></div>'
+              + '</a>';
+          }).join('')
+        + '</div>'
+
+        + '<div class="panels-grid fade-in-4">'
+
+        + '<div class="panel-card">'
+        + '<div class="panel-card-header"><span class="panel-card-title">' + cfg.leftPanelTitle + '</span><a href="#" class="panel-card-action">Ver todas</a></div>'
+        + leftPanelBody
+        + '</div>'
+
+        + '<div class="panel-card">'
+        + '<div class="panel-card-header"><span class="panel-card-title">Órdenes recientes</span><a href="proveedor.html" class="panel-card-action">Ver todas</a></div>'
+        + '<table class="tabla"><thead><tr><th>Orden</th><th>Servicio / Producto</th><th>Estado</th></tr></thead><tbody>'
+        + cfg.orders.map(function(o) {
+            return '<tr><td style="font-weight:600">' + o.id + '</td><td>' + o.product + '</td>'
+              + '<td><span class="estado-pill ' + o.statusClass + '">' + o.label + '</span></td></tr>';
+          }).join('')
+        + '</tbody></table>'
+        + '</div>'
+
+        + '</div>';
+
+      document.getElementById('main-content').innerHTML = html;
+    })();
+
+    function goToProvSection(sec) {
+      localStorage.setItem('proveedorSection', sec);
+      window.location.href = 'proveedor.html';
+    }
+  </script>
+
+</body>
+</html>

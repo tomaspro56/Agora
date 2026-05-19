@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ágora — Servicios a tu puerta</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/tema.js"></script>
+  <style>
+    .hero {
+      padding: 80px 48px 64px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-600);
+      background: var(--gray-200);
+      padding: 6px 14px;
+      border-radius: 100px;
+      margin-bottom: 28px;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--col-farmacia);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .hero h1 {
+      font-size: clamp(42px, 6vw, 72px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 24px;
+      max-width: 700px;
+    }
+
+    .hero h1 .accent-tecnico  { color: var(--col-tecnico); }
+    .hero h1 .accent-farmacia { color: var(--col-farmacia); }
+    .hero h1 .accent-paqueteria { color: var(--col-paqueteria); }
+    .hero h1 .accent-restaurante { color: var(--col-restaurante); }
+
+    .hero-desc {
+      font-size: 18px;
+      color: var(--gray-600);
+      max-width: 500px;
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .servicios-section {
+      padding: 0 48px 80px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .servicios-section h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .servicios-section .sub {
+      font-size: 15px;
+      color: var(--gray-600);
+      margin-bottom: 36px;
+    }
+
+    .servicios-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .servicio-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+      transition: transform 0.25s, box-shadow 0.25s;
+      cursor: pointer;
+    }
+
+    .servicio-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+
+    .servicio-header {
+      padding: 28px 28px 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .servicio-icon {
+      width: 56px; height: 56px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .servicio-icon.tecnico      { background: var(--col-tecnico-soft); }
+    .servicio-icon.farmacia     { background: var(--col-farmacia-soft); }
+    .servicio-icon.paqueteria   { background: var(--col-paqueteria-soft); }
+    .servicio-icon.restaurante  { background: var(--col-restaurante-soft); }
+
+    .servicio-body { padding: 0 28px 28px; }
+    .servicio-body h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .servicio-body p  { font-size: 14px; color: var(--gray-600); margin-bottom: 20px; line-height: 1.6; }
+
+    .servicio-items {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 24px;
+    }
+
+    .servicio-items li {
+      font-size: 13px;
+      color: var(--gray-600);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .servicio-items li::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .tecnico      .servicio-items li::before { background: var(--col-tecnico); }
+    .farmacia     .servicio-items li::before { background: var(--col-farmacia); }
+    .paqueteria   .servicio-items li::before { background: var(--col-paqueteria); }
+    .restaurante  .servicio-items li::before { background: var(--col-restaurante); }
+
+    .divider-accent {
+      height: 4px;
+    }
+
+    .divider-tecnico      { background: var(--col-tecnico); }
+    .divider-farmacia     { background: var(--col-farmacia); }
+    .divider-paqueteria   { background: var(--col-paqueteria); }
+    .divider-restaurante  { background: var(--col-restaurante); }
+
+    /* Cómo funciona */
+    .como-section {
+      background: var(--gray-900);
+      color: #fff;
+      padding: 72px 48px;
+    }
+
+    .como-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .como-inner h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .como-inner .sub { font-size: 15px; color: var(--gray-400); margin-bottom: 48px; }
+
+    .pasos-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 28px;
+      position: relative;
+    }
+
+    .paso {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .paso-num {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .paso h4 { font-size: 16px; font-weight: 600; color: #fff; }
+    .paso p  { font-size: 13px; color: var(--gray-400); line-height: 1.6; }
+
+    /* Footer */
+    .footer {
+      padding: 32px 48px;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+    }
+
+    .footer p { font-size: 13px; color: var(--gray-400); }
+
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 13px; color: var(--gray-400); transition: color 0.15s; }
+    .footer-links a:hover { color: var(--gray-900); }
+
+    /* ── Carrusel ── */
+    .carousel {
+      position: relative;
+      width: 100%;
+      height: 460px;
+      overflow: hidden;
+      background: var(--gray-900);
+    }
+    .carousel-track {
+      display: flex;
+      height: 100%;
+      transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .carousel-slide {
+      min-width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    .carousel-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .carousel-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);
+    }
+    .carousel-caption {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 40px 60px;
+      color: #fff;
+    }
+    .carousel-caption-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+    .carousel-caption h2 {
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+    .carousel-caption p { font-size: 16px; opacity: 0.85; }
+    .carousel-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.9);
+      border: none;
+      border-radius: 50%;
+      width: 46px; height: 46px;
+      font-size: 26px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: background 0.15s, transform 0.15s;
+      line-height: 1;
+      color: var(--gray-900);
+    }
+    .carousel-btn:hover { background: #fff; transform: translateY(-50%) scale(1.08); }
+    .carousel-prev { left: 20px; }
+    .carousel-next { right: 20px; }
+    .carousel-dots {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+    .carousel-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.45);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+      border: none;
+    }
+    .carousel-dot.activo { background: #fff; transform: scale(1.3); }
+
+    /* ── Responsive inline ── */
+
+    /* Tablet (≤ 1024px): reducir padding de tarjetas */
+    @media (max-width: 1024px) {
+      .hero { padding: 48px 24px 36px; }
+      .servicios-section { padding: 0 24px 48px; }
+      .como-section { padding: 56px 24px; }
+      .footer { padding: 28px 24px; }
+      .servicio-header { padding: 20px 20px 14px; }
+      .servicio-body { padding: 0 20px 20px; }
+      .servicio-body h3 { font-size: 18px; }
+      .pasos-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    }
+
+    /* Mobile (≤ 640px): tarjetas en 1 columna, proporciones corregidas */
+    @media (max-width: 640px) {
+      .servicios-grid { grid-template-columns: 1fr; }
+
+      .servicio-header {
+        padding: 14px 16px 10px;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .servicio-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+        flex-shrink: 0;
+      }
+      .badge { font-size: 11px; padding: 3px 10px; }
+
+      .servicio-body { padding: 0 16px 16px; }
+      .servicio-body h3 { font-size: 16px; }
+      .servicio-body p { font-size: 13px; margin-bottom: 14px; }
+
+      .como-section { padding: 36px 16px; }
+      .pasos-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+      .paso-num { width: 36px; height: 36px; font-size: 15px; }
+      .paso h4 { font-size: 14px; }
+      .paso p { font-size: 12px; }
+
+      .footer {
+        flex-direction: column;
+        gap: 12px;
+        padding: 20px 16px;
+        text-align: center;
+      }
+      .footer-links { flex-wrap: wrap; justify-content: center; gap: 12px; }
+    }
+
+    /* ── Tema oscuro ── */
+    html[data-theme="dark"] {
+      --gray-100: #1C1B19;
+      --gray-200: #2C2A27;
+      --gray-400: #6B6761;
+      --gray-600: #A8A49F;
+      --gray-900: #F5F3F0;
+    }
+    html[data-theme="dark"] body       { background: #1C1B19; }
+    html[data-theme="dark"] .navbar    { background: #252320; border-color: #2C2A27; }
+    html[data-theme="dark"] .servicio-card  { background: #252320; }
+    html[data-theme="dark"] .footer    { background: #252320; border-color: #2C2A27; }
+    html[data-theme="dark"] .como-section  { background: #111110; }
+    html[data-theme="dark"] .btn-outline {
+      border-color: #444;
+      color: var(--gray-900);
+    }
+    html[data-theme="dark"] .btn-outline:hover { background: #2C2A27; }
+
+    /* ── Mobile nav drawer (solo index) ── */
+    /* ── Mobile nav dropdown (solo index) ── */
+    .nav-mobile-drawer { display: none; }
+    .nav-mobile-drawer.open { display: block; }
+
+    /* Overlay transparente para cerrar al tocar fuera */
+    .nav-mobile-overlay {
+      position: fixed; inset: 0;
+      z-index: 90;
+    }
+    /* Panel compacto flotante bajo el botón ☰ */
+    .nav-mobile-panel {
+      position: fixed; top: 66px; right: 12px;
+      width: 210px;
+      background: #fff;
+      z-index: 91;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-lg);
+    }
+    .nav-mobile-close { display: none; }
+    .nav-mobile-section { display: none; }
+    .nav-mobile-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: var(--radius-md);
+      font-size: 14px; font-weight: 500; color: var(--gray-600);
+      text-decoration: none; transition: background 0.15s;
+    }
+    .nav-mobile-link:hover { background: var(--gray-100); color: var(--gray-900); }
+    .nav-mobile-actions {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 8px 4px 4px;
+      margin-top: 2px;
+      border-top: 1px solid var(--gray-200);
+    }
+    .nav-mobile-actions .btn {
+      justify-content: center;
+      padding: 9px 16px;
+      font-size: 13px;
+      width: 100%;
+    }
+
+    html[data-theme="dark"] .nav-mobile-panel {
+      background: #252320;
+      border-color: #3A3835;
+    }
+    html[data-theme="dark"] .nav-mobile-link:hover { background: #2C2A27; }
+    html[data-theme="dark"] .nav-mobile-actions { border-color: #3A3835; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-logo">
+      <img id="logo-img" src="imagenes/logo/agoraN.png" alt="Ágora" style="height:48px;vertical-align:middle">
+    </div>
+    <ul class="navbar-links">
+      <li><a href="#servicios">Servicios</a></li>
+      <li><a href="#como">Cómo funciona</a></li>
+    </ul>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="menu-toggle" onclick="toggleNavMenu()" title="Menú">☰</button>
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTema()" aria-label="Activar modo oscuro"></button>
+      <!-- Sin sesión -->
+      <div id="nav-no-sesion" style="display:flex;align-items:center;gap:8px">
+        <a href="pages/login.html" class="btn btn-outline">Iniciar sesión</a>
+        <a href="pages/cliente.html" class="btn btn-dark">Pedir ahora</a>
+      </div>
+      <!-- Con sesión -->
+      <div id="nav-con-sesion" style="display:none;align-items:center;gap:8px">
+        <span style="font-size:13px;color:var(--gray-600)">Hola, <strong id="nav-sesion-nombre" style="color:var(--gray-900)">Usuario</strong></span>
+        <a id="nav-sesion-link" href="pages/cliente.html" class="btn btn-dark">Mi panel</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Menú móvil compacto -->
+  <div id="nav-mobile-drawer" class="nav-mobile-drawer">
+    <div class="nav-mobile-overlay" onclick="toggleNavMenu()"></div>
+    <div class="nav-mobile-panel">
+      <a href="#servicios" class="nav-mobile-link" onclick="toggleNavMenu()">🛍️ Servicios</a>
+      <a href="#como" class="nav-mobile-link" onclick="toggleNavMenu()">📋 Cómo funciona</a>
+      <div class="nav-mobile-actions">
+        <div id="nav-mobile-no-sesion">
+          <a href="pages/login.html" class="btn btn-outline" style="width:100%;justify-content:center">Iniciar sesión</a>
+        </div>
+        <div id="nav-mobile-con-sesion" style="display:none">
+          <a id="nav-mobile-sesion-link" href="pages/cliente.html" class="btn btn-outline" style="width:100%;justify-content:center">Mi panel</a>
+        </div>
+        <a href="pages/cliente.html" class="btn btn-dark">Pedir ahora</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Carrusel -->
+  <div class="carousel" aria-label="Galería de servicios" role="region">
+    <div class="carousel-track" id="carousel-track">
+      <div class="carousel-slide">
+        <img src="imagenes/comida.jpg" alt="Comida a domicilio">
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption">
+          <div class="carousel-caption-badge" style="background:var(--col-restaurante)">Restaurante</div>
+          <h2>Comida a tu puerta</h2>
+          <p>Pide en tus restaurantes favoritos y recibe en minutos</p>
+        </div>
+      </div>
+      <div class="carousel-slide">
+        <img src="imagenes/electricista.jpg" alt="Servicios técnicos">
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption">
+          <div class="carousel-caption-badge" style="background:var(--col-tecnico)">Técnicos</div>
+          <h2>Profesionales verificados</h2>
+          <p>Electricistas, plomeros y más, disponibles las 24 horas</p>
+        </div>
+      </div>
+      <div class="carousel-slide">
+        <img src="imagenes/farmacia.jpg" alt="Farmacia a domicilio">
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption">
+          <div class="carousel-caption-badge" style="background:var(--col-farmacia)">Farmacia</div>
+          <h2>Medicamentos en 30 min</h2>
+          <p>Entrega desde farmacias cercanas directo a tu domicilio</p>
+        </div>
+      </div>
+      <div class="carousel-slide">
+        <img src="imagenes/paquetes.jpg" alt="Envíos y paquetería">
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption">
+          <div class="carousel-caption-badge" style="background:var(--col-paqueteria)">Paquetería</div>
+          <h2>Envíos con rastreo en tiempo real</h2>
+          <p>Confirma la recolección y recibe alertas en cada etapa del recorrido</p>
+        </div>
+      </div>
+    </div>
+    <button class="carousel-btn carousel-prev" onclick="moverCarrusel(-1)">&#8249;</button>
+    <button class="carousel-btn carousel-next" onclick="moverCarrusel(1)">&#8250;</button>
+    <div class="carousel-dots" id="carousel-dots"></div>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero fade-in">
+    <div class="hero-eyebrow">Servicios disponibles ahora mismo</div>
+    <h1>
+      Todo lo que<br>
+      necesitas,<br>
+      <span class="accent-tecnico">cuando</span>
+      <span class="accent-farmacia">lo</span>
+      <span class="accent-paqueteria">necesitas.</span>
+    </h1>
+    <p class="hero-desc">
+      Comida, técnicos, farmacia y envíos en una sola plataforma.
+      Cada servicio gestionado por el proveedor especializado en él.
+    </p>
+  </section>
+
+  <!-- Servicios -->
+  <section class="servicios-section fade-in-2" id="servicios">
+    <h2>¿Qué necesitas hoy?</h2>
+    <p class="sub">Elige una categoría y solicita tu servicio en minutos.</p>
+
+    <div class="servicios-grid">
+
+      <!-- Técnicos -->
+      <div class="servicio-card tecnico fade-in-2" role="button" tabindex="0" onclick="solicitarServicio('tecnico')" onkeydown="if(event.key==='Enter'||event.key===' ')solicitarServicio('tecnico')">
+        <div class="divider-accent divider-tecnico"></div>
+        <div class="servicio-header">
+          <div class="servicio-icon tecnico">🔧</div>
+          <span class="badge badge-tecnico">Disponible 24/7</span>
+        </div>
+        <div class="servicio-body">
+          <h3>Servicios técnicos</h3>
+          <p>Profesionales verificados para arreglos en tu hogar u oficina.</p>
+          <ul class="servicio-items">
+            <li>Plomería y gasfitería</li>
+            <li>Electricidad y cableado</li>
+            <li>Cerrajería de emergencia</li>
+            <li>Reparación de electrodomésticos</li>
+          </ul>
+          <span class="btn btn-tecnico" style="width:100%;justify-content:center">Solicitar técnico</span>
+        </div>
+      </div>
+
+      <!-- Farmacia -->
+      <div class="servicio-card farmacia fade-in-3" role="button" tabindex="0" onclick="solicitarServicio('farmacia')" onkeydown="if(event.key==='Enter'||event.key===' ')solicitarServicio('farmacia')">
+        <div class="divider-accent divider-farmacia"></div>
+        <div class="servicio-header">
+          <div class="servicio-icon farmacia">💊</div>
+          <span class="badge badge-farmacia">Entrega en 30 min</span>
+        </div>
+        <div class="servicio-body">
+          <h3>Farmacia</h3>
+          <p>Medicamentos y productos de salud entregados a domicilio.</p>
+          <ul class="servicio-items">
+            <li>Medicamentos con y sin receta</li>
+            <li>Productos de cuidado personal</li>
+            <li>Vitaminas y suplementos</li>
+            <li>Insumos médicos básicos</li>
+          </ul>
+          <span class="btn btn-farmacia" style="width:100%;justify-content:center">Pedir medicamentos</span>
+        </div>
+      </div>
+
+      <!-- Paquetería -->
+      <div class="servicio-card paqueteria fade-in-4" role="button" tabindex="0" onclick="solicitarServicio('paqueteria')" onkeydown="if(event.key==='Enter'||event.key===' ')solicitarServicio('paqueteria')">
+        <div class="divider-accent divider-paqueteria"></div>
+        <div class="servicio-header">
+          <div class="servicio-icon paqueteria">📦</div>
+          <span class="badge badge-paqueteria">Rastreo en tiempo real</span>
+        </div>
+        <div class="servicio-body">
+          <h3>Empresa de envíos</h3>
+          <p>Envía y recibe paquetes en la ciudad de forma segura y rápida.</p>
+          <ul class="servicio-items">
+            <li>Envío express mismo día</li>
+            <li>Rastreo con alertas por correo</li>
+            <li>Recolección a domicilio</li>
+            <li>Entrega programada</li>
+          </ul>
+          <span class="btn btn-paqueteria" style="width:100%;justify-content:center">Enviar paquete</span>
+        </div>
+      </div>
+
+      <!-- Restaurante -->
+      <div class="servicio-card restaurante fade-in-4" role="button" tabindex="0" onclick="solicitarServicio('restaurante')" onkeydown="if(event.key==='Enter'||event.key===' ')solicitarServicio('restaurante')">
+        <div class="divider-accent divider-restaurante"></div>
+        <div class="servicio-header">
+          <div class="servicio-icon restaurante">🍔</div>
+          <span class="badge badge-restaurante">Entrega en 45 min</span>
+        </div>
+        <div class="servicio-body">
+          <h3>Restaurante</h3>
+          <p>Pide comida de tus restaurantes favoritos directo a tu puerta.</p>
+          <ul class="servicio-items">
+            <li>Combos y menús del día</li>
+            <li>Pizzas, hamburguesas y más</li>
+            <li>Seguimiento del pedido</li>
+            <li>Opciones vegetarianas</li>
+          </ul>
+          <span class="btn btn-restaurante" style="width:100%;justify-content:center">Pedir comida</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Cómo funciona -->
+  <section class="como-section" id="como">
+    <div class="como-inner">
+      <h2>Así de fácil funciona</h2>
+      <p class="sub">De la solicitud a la entrega, te mantenemos informado en cada paso.</p>
+      <div class="pasos-grid">
+        <div class="paso">
+          <div class="paso-num">1</div>
+          <h4>Elige tu servicio</h4>
+          <p>Selecciona entre técnicos, farmacia o paquetería y describe lo que necesitas.</p>
+        </div>
+        <div class="paso">
+          <div class="paso-num">2</div>
+          <h4>Proveedor asignado</h4>
+          <p>Un proveedor acepta tu solicitud y te confirmamos la asignación al instante.</p>
+        </div>
+        <div class="paso">
+          <div class="paso-num">3</div>
+          <h4>Seguimiento en vivo</h4>
+          <p>Recibe correos automáticos en cada cambio de estado de tu pedido.</p>
+        </div>
+        <div class="paso">
+          <div class="paso-num">4</div>
+          <h4>Entrega y calificación</h4>
+          <p>Confirma la recepción y califica el servicio para ayudar a la comunidad.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© 2026 Ágora — Laboratorio WSGI · ITM</p>
+    <div class="footer-links">
+      <a href="pages/login.html">Acceder como cliente</a>
+      <a href="pages/login.html">Acceder como proveedor</a>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      let actual = 0;
+      const slides = 4;
+      const track = document.getElementById('carousel-track');
+      const dotsEl = document.getElementById('carousel-dots');
+
+      for (let i = 0; i < slides; i++) {
+        const d = document.createElement('button');
+        d.className = 'carousel-dot' + (i === 0 ? ' activo' : '');
+        d.setAttribute('aria-label', 'Ir a imagen ' + (i + 1));
+        d.onclick = (function (n) { return function () { irA(n); }; })(i);
+        dotsEl.appendChild(d);
+      }
+
+      function irA(n) {
+        actual = (n + slides) % slides;
+        track.style.transform = 'translateX(-' + (actual * 100) + '%)';
+        dotsEl.querySelectorAll('.carousel-dot').forEach(function (d, i) {
+          d.classList.toggle('activo', i === actual);
+        });
+      }
+
+      window.moverCarrusel = function (dir) { irA(actual + dir); };
+
+      // Auto-avance con pausa al hacer hover o focus
+      var intervalo = setInterval(function () { irA(actual + 1); }, 4500);
+      var carouselEl = document.querySelector('.carousel');
+      carouselEl.addEventListener('mouseenter', function () { clearInterval(intervalo); });
+      carouselEl.addEventListener('mouseleave', function () { intervalo = setInterval(function () { irA(actual + 1); }, 4500); });
+      carouselEl.addEventListener('focusin',    function () { clearInterval(intervalo); });
+      carouselEl.addEventListener('focusout',   function () { intervalo = setInterval(function () { irA(actual + 1); }, 4500); });
+    })();
+
+    function solicitarServicio(cat) {
+      if (localStorage.getItem('agora_sesion')) {
+        window.location.href = 'pages/cliente.html';
+      } else {
+        localStorage.setItem('pendingCat', cat);
+        window.location.href = 'pages/login.html';
+      }
+    }
+
+    // Sesión activa: actualizar navbar
+    function actualizarNavbarSesion() {
+      var noSesion       = document.getElementById('nav-no-sesion');
+      var conSesion      = document.getElementById('nav-con-sesion');
+      var mobileNoSesion = document.getElementById('nav-mobile-no-sesion');
+      var mobileConSesion= document.getElementById('nav-mobile-con-sesion');
+
+      if (localStorage.getItem('agora_sesion')) {
+        var perfil = JSON.parse(localStorage.getItem('agora_perfil') || '{}');
+        var nombre = perfil.nombre || 'Usuario';
+        document.getElementById('nav-sesion-nombre').textContent = nombre;
+        document.getElementById('nav-sesion-link').href = 'pages/cliente.html';
+        document.getElementById('nav-sesion-link').textContent = 'Mi panel';
+        document.getElementById('nav-mobile-sesion-link').href = 'pages/cliente.html';
+        document.getElementById('nav-mobile-sesion-link').textContent = 'Mi panel (' + nombre + ')';
+        noSesion.style.display        = 'none';
+        conSesion.style.display       = 'flex';
+        mobileNoSesion.style.display  = 'none';
+        mobileConSesion.style.display = 'block';
+
+      } else if (localStorage.getItem('agora_sesion_prov')) {
+        var perfilProv = JSON.parse(localStorage.getItem('agora_perfil_prov') || '{}');
+        var userProv = perfilProv.usuario || 'Proveedor';
+        document.getElementById('nav-sesion-nombre').textContent = userProv;
+        document.getElementById('nav-sesion-link').href = 'pages/proveedor.html';
+        document.getElementById('nav-sesion-link').textContent = 'Mi panel';
+        document.getElementById('nav-mobile-sesion-link').href = 'pages/proveedor.html';
+        document.getElementById('nav-mobile-sesion-link').textContent = 'Panel proveedor';
+        noSesion.style.display        = 'none';
+        conSesion.style.display       = 'flex';
+        mobileNoSesion.style.display  = 'none';
+        mobileConSesion.style.display = 'block';
+      }
+    }
+
+    actualizarNavbarSesion();
+    // Manejar bfcache (botón Atrás del navegador)
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) actualizarNavbarSesion();
+    });
+
+    // Drawer de navegación móvil
+    var navDrawer = document.getElementById('nav-mobile-drawer');
+    window.toggleNavMenu = function () {
+      navDrawer.classList.toggle('open');
+    };
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') navDrawer.classList.remove('open');
+    });
+  </script>
+
+</body>
+</html>

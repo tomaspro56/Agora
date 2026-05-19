@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ágora — Acceso al sistema</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/tema.js"></script>
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: #f0f2f5;
+    }
+
+    /* ── Panel izquierdo ── */
+    .login-left {
+      flex: 1;
+      background: #ffffff;
+      padding: 56px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-right: 1px solid var(--gray-200);
+    }
+    .login-left-body { max-width: 420px; }
+    .login-left h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+      margin-top: 48px;
+    }
+    .login-left p {
+      font-size: 16px;
+      color: var(--gray-600);
+      line-height: 1.65;
+      margin-bottom: 40px;
+    }
+    .login-features { display: flex; flex-direction: column; gap: 14px; }
+    .login-feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--gray-600);
+    }
+    .login-feature-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--col-farmacia);
+      flex-shrink: 0;
+    }
+    .login-copy { font-size: 12px; color: var(--gray-400); }
+
+    /* ── Panel derecho ── */
+    .login-right {
+      width: 480px;
+      background: #f0f2f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+    }
+    .login-card { width: 100%; max-width: 360px; }
+    .login-card h2 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+    .login-card .subtitle {
+      font-size: 14px;
+      color: var(--gray-600);
+      margin-bottom: 28px;
+    }
+    .error-msg {
+      display: none;
+      background: #FFEAEB;
+      color: #CC1A2A;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .login-footer-note {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--gray-400);
+    }
+
+    /* ── Tarjetas de rol ── */
+    .rol-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      text-align: left;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    .rol-card:hover {
+      border-color: var(--gray-900);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .rol-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .rol-info strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 2px;
+    }
+    .rol-info span { font-size: 12px; color: var(--gray-600); }
+
+    /* ── Tabs login/registro ── */
+    .login-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--gray-200);
+      margin-bottom: 24px;
+      gap: 0;
+    }
+    .login-tab {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 10px 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .login-tab.activo {
+      color: var(--gray-900);
+      border-bottom-color: var(--gray-900);
+      font-weight: 600;
+    }
+    .volver-link {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--gray-400);
+      cursor: pointer;
+    }
+    .volver-link:hover { color: var(--gray-600); }
+
+    @media (max-width: 768px) {
+      .login-left { display: none; }
+      .login-right { width: 100%; padding: 40px 24px; }
+    }
+    @media (max-width: 480px) {
+      .login-right { padding: 32px 16px; }
+      .login-card { max-width: 100%; }
+    }
+
+    html[data-theme="dark"] body        { background: #1C1B19; }
+    html[data-theme="dark"] .login-left { background: #252320; border-color: #2C2A27; }
+    html[data-theme="dark"] .login-right { background: #1C1B19; }
+    html[data-theme="dark"] .rol-card   { background: #2C2A27; border-color: #3A3835; }
+    html[data-theme="dark"] .login-card h2,
+    html[data-theme="dark"] .login-left h1 { color: var(--gray-900); }
+
+    /* ── Modal recuperar contraseña ── */
+    .recuperar-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .recuperar-overlay.abierto { display: flex; }
+    .recuperar-modal {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 100%;
+      max-width: 400px;
+      margin: 20px;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .recuperar-modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .recuperar-modal .rec-sub { font-size: 13px; color: var(--gray-600); margin-bottom: 22px; line-height: 1.5; }
+    .recuperar-success {
+      display: none;
+      background: #E6FAF6;
+      border: 1px solid #00B894;
+      color: #007A63;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    html[data-theme="dark"] .recuperar-modal { background: #252320; }
+    html[data-theme="dark"] .recuperar-modal .form-input {
+      background: #2C2A27; color: var(--gray-900); border-color: #3A3835;
+    }
+
+    /* ── Ojito contraseña ── */
+    .pass-wrap {
+      position: relative;
+    }
+    .pass-wrap .form-input {
+      padding-right: 42px;
+    }
+    .pass-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: var(--gray-400);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+    }
+    .pass-toggle:hover { color: var(--gray-900); }
+    html[data-theme="dark"] .pass-toggle:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle" id="theme-toggle" onclick="toggleTema()" aria-label="Activar modo oscuro" style="position:fixed;top:16px;right:16px;z-index:50"></button>
+
+  <div class="login-left">
+    <a href="../index.html" class="navbar-logo">
+      <img id="logo-img" src="../imagenes/logo/agoraN.png" alt="Ágora" style="height:48px;vertical-align:middle">
+    </a>
+    <div class="login-left-body">
+      <h1>Todo lo que necesitas, en un solo lugar</h1>
+      <p>Comida, medicamentos, técnicos y envíos a domicilio. Para clientes que piden y proveedores que gestionan.</p>
+      <div class="login-features">
+        <div class="login-feature"><div class="login-feature-dot"></div>Sigue tus pedidos y entregas en tiempo real</div>
+        <div class="login-feature"><div class="login-feature-dot"></div>Alertas por correo en cada etapa del servicio</div>
+        <div class="login-feature"><div class="login-feature-dot"></div>Registro permanente de salida de mercancía</div>
+        <div class="login-feature"><div class="login-feature-dot"></div>Proveedores verificados en cada categoría</div>
+      </div>
+    </div>
+    <div class="login-copy">© 2026 Ágora</div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-card">
+
+      <!-- Paso 1: Selección de rol -->
+      <div id="step-rol">
+        <h2>Bienvenido</h2>
+        <p class="subtitle">¿Cómo deseas ingresar?</p>
+
+        <button class="rol-card" onclick="elegirRol('cliente')">
+          <div class="rol-icon" style="background:var(--col-paqueteria-soft)">&#128100;</div>
+          <div class="rol-info">
+            <strong>Soy cliente</strong>
+            <span>Ver servicios y hacer seguimiento de mis pedidos</span>
+          </div>
+        </button>
+
+        <button class="rol-card" onclick="elegirRol('proveedor')">
+          <div class="rol-icon" style="background:var(--col-farmacia-soft)">&#127978;</div>
+          <div class="rol-info">
+            <strong>Soy proveedor</strong>
+            <span>Gestionar pedidos, inventario, picking y facturación</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Paso 2-A: Formulario cliente (login + registro) -->
+      <div id="step-form" style="display:none">
+        <h2>Acceso cliente</h2>
+        <p class="subtitle">Ingresa o crea tu cuenta para continuar</p>
+
+        <div class="login-tabs">
+          <button class="login-tab activo" id="tab-login" onclick="cambiarTab('login')">Iniciar sesión</button>
+          <button class="login-tab" id="tab-registro" onclick="cambiarTab('registro')">Registrarse</button>
+        </div>
+
+        <!-- Login -->
+        <div id="form-login">
+          <div class="error-msg" id="error-login">Completa usuario y contraseña para continuar.</div>
+          <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label class="form-label" for="login-user">Usuario</label>
+              <input class="form-input" type="text" id="login-user" placeholder="tu.usuario" autocomplete="username">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="login-pass">Contraseña</label>
+              <div class="pass-wrap">
+                <input class="form-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+                <button type="button" class="pass-toggle" onclick="togglePass('login-pass', this)" aria-label="Mostrar contraseña">
+                  <svg id="ico-login-pass" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-dark" style="width:100%;justify-content:center;padding:12px 20px">Ingresar</button>
+          </form>
+          <div style="text-align:center;margin-top:14px">
+            <button onclick="abrirRecuperar()" style="background:none;border:none;font-size:13px;color:var(--gray-600);cursor:pointer;text-decoration:underline;font-family:inherit">¿Olvidaste tu contraseña?</button>
+          </div>
+        </div>
+
+        <!-- Registro -->
+        <div id="form-registro" style="display:none">
+          <div class="error-msg" id="error-registro">Completa todos los campos para continuar.</div>
+          <form onsubmit="handleRegistro(event)">
+            <div class="form-group">
+              <label class="form-label" for="reg-nombre">Nombre completo</label>
+              <input class="form-input" type="text" id="reg-nombre" placeholder="Tu nombre" autocomplete="name">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-usuario">Usuario</label>
+              <input class="form-input" type="text" id="reg-usuario" placeholder="tu.usuario" autocomplete="username">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-correo">Correo electrónico</label>
+              <input class="form-input" type="email" id="reg-correo" placeholder="tu@correo.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-pass">Contraseña</label>
+              <div class="pass-wrap">
+                <input class="form-input" type="password" id="reg-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                <button type="button" class="pass-toggle" onclick="togglePass('reg-pass', this)" aria-label="Mostrar contraseña">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-dark" style="width:100%;justify-content:center;padding:12px 20px">Crear cuenta</button>
+          </form>
+        </div>
+
+        <div class="volver-link" onclick="volverAlRol()">← Cambiar perfil</div>
+      </div>
+
+      <!-- Paso 2-B-1: Login proveedor -->
+      <div id="step-prov-login" style="display:none">
+        <h2>Acceso proveedor</h2>
+        <p class="subtitle">Ingresa tus credenciales para continuar</p>
+        <div class="error-msg" id="error-prov-login">Completa usuario y contraseña para continuar.</div>
+        <form onsubmit="handleProvLogin(event)">
+          <div class="form-group">
+            <label class="form-label" for="prov-user">Usuario</label>
+            <input class="form-input" type="text" id="prov-user" placeholder="tu.usuario" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="prov-pass">Contraseña</label>
+            <div class="pass-wrap">
+              <input class="form-input" type="password" id="prov-pass" placeholder="••••••••" autocomplete="current-password">
+              <button type="button" class="pass-toggle" onclick="togglePass('prov-pass', this)" aria-label="Mostrar contraseña">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-dark" style="width:100%;justify-content:center;padding:12px 20px">Ingresar</button>
+        </form>
+        <div class="volver-link" onclick="volverAlRol()">← Cambiar perfil</div>
+      </div>
+
+      <!-- Paso 2-B-2: Selector de tipo de servicio (proveedores) -->
+      <div id="step-prov" style="display:none">
+        <h2>Panel de operaciones</h2>
+        <p class="subtitle">Selecciona tu tipo de servicio</p>
+
+        <button class="rol-card" onclick="accederProveedor('restaurante')">
+          <div class="rol-icon" style="background:var(--col-restaurante-soft)">🍔</div>
+          <div class="rol-info">
+            <strong>Restaurante</strong>
+            <span>Gestión de pedidos y cocina</span>
+          </div>
+        </button>
+        <button class="rol-card" onclick="accederProveedor('tecnico')">
+          <div class="rol-icon" style="background:var(--col-tecnico-soft)">🔧</div>
+          <div class="rol-info">
+            <strong>Servicios técnicos</strong>
+            <span>Asignación de técnicos y servicios</span>
+          </div>
+        </button>
+        <button class="rol-card" onclick="accederProveedor('farmacia')">
+          <div class="rol-icon" style="background:var(--col-farmacia-soft)">💊</div>
+          <div class="rol-info">
+            <strong>Farmacia</strong>
+            <span>Inventario y despacho de medicamentos</span>
+          </div>
+        </button>
+        <button class="rol-card" onclick="accederProveedor('paqueteria')">
+          <div class="rol-icon" style="background:var(--col-paqueteria-soft)">📦</div>
+          <div class="rol-info">
+            <strong>Paquetería</strong>
+            <span>Picking, packing y facturación</span>
+          </div>
+        </button>
+
+        <div class="volver-link" onclick="volverAlRol()">← Cambiar perfil</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Recuperar contraseña -->
+  <div class="recuperar-overlay" id="recuperar-overlay">
+    <div class="recuperar-modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>Recuperar contraseña</h3>
+        <button onclick="cerrarRecuperar()" style="background:var(--gray-100);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+      <p class="rec-sub">Ingresa tu correo y te enviaremos una clave temporal para acceder a tu cuenta.</p>
+      <div class="recuperar-success" id="recuperar-success">
+        ✓ Si el correo está registrado, recibirás una clave temporal. Esta es una versión demo — el envío real está desactivado.
+      </div>
+      <div id="recuperar-form">
+        <div style="margin-bottom:16px">
+          <label class="form-label" for="rec-email">Correo electrónico</label>
+          <input class="form-input" type="email" id="rec-email" placeholder="tu@correo.com" autocomplete="email">
+        </div>
+        <div id="recuperar-error" style="display:none;color:#CC1A2A;font-size:12px;margin-bottom:12px">
+          Ingresa un correo válido para continuar.
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-outline" onclick="cerrarRecuperar()">Cancelar</button>
+          <button class="btn btn-dark" onclick="enviarRecuperar()">Enviar clave temporal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/login.js?v=3"></script>
+  <script>
+    function abrirRecuperar() {
+      document.getElementById('rec-email').value = '';
+      document.getElementById('recuperar-error').style.display = 'none';
+      document.getElementById('recuperar-success').style.display = 'none';
+      document.getElementById('recuperar-form').style.display = 'block';
+      document.getElementById('recuperar-overlay').classList.add('abierto');
+      setTimeout(() => document.getElementById('rec-email').focus(), 100);
+    }
+
+    function cerrarRecuperar() {
+      document.getElementById('recuperar-overlay').classList.remove('abierto');
+    }
+
+    function enviarRecuperar() {
+      var email = document.getElementById('rec-email').value.trim();
+      var errEl = document.getElementById('recuperar-error');
+      if (!email || !email.includes('@')) {
+        errEl.style.display = 'block';
+        return;
+      }
+      errEl.style.display = 'none';
+      document.getElementById('recuperar-form').style.display = 'none';
+      document.getElementById('recuperar-success').style.display = 'block';
+    }
+
+    document.getElementById('recuperar-overlay').addEventListener('click', function(e) {
+      if (e.target === this) cerrarRecuperar();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') cerrarRecuperar();
+    });
+  </script>
+</body>
+</html>

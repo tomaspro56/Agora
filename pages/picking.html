@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ágora — Picking</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/tema.js"></script>
+  <style>
+    .picking-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 20px;
+      align-items: start;
+    }
+    .panel-card {
+      background: #fff;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+    .panel-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-card-title { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+    .panel-card-meta  { font-size: 12px; color: var(--gray-600); }
+    .picking-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .picking-item:last-of-type { border-bottom: none; }
+    .item-check {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--gray-200);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; transition: all 0.15s; margin-top: 2px;
+    }
+    .item-check.checked { background: var(--col-farmacia); border-color: var(--col-farmacia); }
+    .item-check svg { opacity: 0; width: 14px; height: 14px; transition: opacity 0.15s; }
+    .item-check.checked svg { opacity: 1; }
+    .item-info { flex: 1; }
+    .item-name   { font-size: 14px; font-weight: 600; color: var(--gray-900); margin-bottom: 4px; }
+    .item-detail { font-size: 12px; color: var(--gray-600); margin-bottom: 12px; }
+    .progress-wrap { display: flex; align-items: center; gap: 10px; }
+    .progress-bar  { flex: 1; height: 6px; background: var(--gray-200); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--col-farmacia); border-radius: 3px; }
+    .progress-label { font-size: 11px; color: var(--gray-600); white-space: nowrap; }
+    .progress-label.ok { color: var(--col-farmacia-dark); }
+    .item-qty { text-align: right; flex-shrink: 0; }
+    .qty-pedido { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--gray-900); }
+    .qty-sub    { font-size: 11px; color: var(--gray-400); }
+    .alerta-tolerancia {
+      margin: 0 20px 20px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 12px; line-height: 1.55;
+    }
+    .resumen-section { padding: 20px; }
+    .resumen-section + .resumen-section { border-top: 1px solid var(--gray-200); }
+    .resumen-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .resumen-row   { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; gap: 16px; }
+    .resumen-label { font-size: 13px; color: var(--gray-600); }
+    .resumen-val   { font-size: 13px; font-weight: 600; }
+    .resumen-val.ok      { color: var(--col-farmacia-dark); }
+    .resumen-val.warning { color: var(--col-tecnico-dark); }
+    .divider { border: none; border-top: 1px solid var(--gray-200); margin: 12px 0; }
+    .btn-full { width: 100%; justify-content: center; margin-bottom: 8px; }
+    .btn:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .btn-hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">
+      <img id="logo-img" src="../imagenes/logo/agoraN.png" alt="Ágora" style="height:48px;vertical-align:middle">
+    </a>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="menu-toggle" onclick="toggleSidebar()" title="Menú">☰</button>
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTema()" aria-label="Activar modo oscuro"></button>
+    </div>
+  </nav>
+
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">Proveedor</div>
+      <a href="dashboard.html" class="sidebar-item"><span class="sidebar-icon">📊</span> Dashboard</a>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">📋</span> Pedidos</a>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">📦</span> Inventario</a>
+
+      <div class="sidebar-section">Operaciones</div>
+      <a href="picking.html" class="sidebar-item activo"><span class="sidebar-icon">🔍</span> Picking</a>
+      <a href="packing.html" class="sidebar-item"><span class="sidebar-icon">📫</span> Packing</a>
+      <a href="facturacion.html" class="sidebar-item"><span class="sidebar-icon">🧾</span> Facturación</a>
+
+      <div class="sidebar-section">Administración</div>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">➕</span> Agregar producto</a>
+
+      <div style="margin-top:auto;padding-top:24px;border-top:1px solid var(--gray-200)">
+        <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">←</span> Volver a proveedor</a>
+      </div>
+    </aside>
+
+    <main class="main-content" id="main-content"></main>
+  </div>
+
+  <script>
+    (function () {
+      var tipo = localStorage.getItem('proveedorActivo') || 'farmacia';
+      var ordenActual = localStorage.getItem('ordenActual');
+
+      if (tipo === 'tecnico') {
+        localStorage.setItem('mensajeToast', 'Los servicios técnicos no requieren picking');
+        window.location = 'proveedor.html';
+        return;
+      }
+
+      var CFG = {
+        restaurante: {
+          title: 'Preparación de pedido',
+          ordenLabel: 'Pedido #1042',
+          meta: 'Hoy, 12:30 · Cocinero: Juan Manuel · 2 platos',
+          statusLabel: 'En preparación',
+          items: [
+            { name: 'Combo Hamburguesa x2', detail: 'Parrilla principal — Lista estimada: 10 min', qty: '2 combos', qtyLabel: 'encargados', checked: false, progress: null },
+            { name: 'Gaseosa 400ml x3',     detail: 'Refrigerador principal — Zona bebidas',     qty: '3 uds',    qtyLabel: 'pedidas',    checked: false, progress: null }
+          ],
+          footerNote: 'Verifica que todos los platos estén completos y bien presentados antes de confirmar.',
+          footerStyle: 'background:var(--col-farmacia-soft);color:var(--col-farmacia-dark)',
+          resumen: { total: '2 platos + 3 bebidas', recogido: '0 completados', pendiente: '2 platos + 3 bebidas', estado: 'Pendiente', estadoClass: 'warning' }
+        },
+        farmacia: {
+          title: 'Picking de medicamentos',
+          ordenLabel: 'Orden #1042',
+          meta: 'Hoy, 09:14 · Operario: Juan Manuel · 2 ítems',
+          statusLabel: 'En picking',
+          items: [
+            { name: 'Ibuprofeno 400mg x10',  detail: 'Caja #MED-01 — Estante B2',             qty: '10 unid.', qtyLabel: 'pedidas', checked: false, progress: { pct: 0, label: '0 unid. recogidas de 10 pedidas', ok: false } },
+            { name: 'Vitamina C 1000mg x2',  detail: 'Cualquier caja disponible — Estante A1', qty: '2 unid.',  qtyLabel: 'pedidas', checked: false, progress: { pct: 0, label: '0 unid. recogidas de 2 pedidas',  ok: false } }
+          ],
+          footerNote: 'Tolerancia activa: se permite hasta 1 unidad adicional sobre lo pedido en packs sellados.',
+          footerStyle: 'background:var(--col-paqueteria-soft);color:var(--col-paqueteria-dark)',
+          resumen: { total: '10 unid. + 2 unid.', recogido: '6 unid. + 0 unid.', pendiente: '4 unid. + 2 unid.', estado: 'En progreso', estadoClass: 'warning' }
+        },
+        paqueteria: {
+          title: 'Picking de paquetes',
+          ordenLabel: 'Orden #1042',
+          meta: 'Hoy, 09:14 · Operario: Juan Manuel · 2 ítems',
+          statusLabel: 'En picking',
+          items: [
+            { name: 'Paquete PKT-041', detail: 'Bodega zona norte — Estante 3B', qty: '1 paq.',  qtyLabel: 'pedido', checked: false, progress: { pct: 0, label: '0 paq. recogidos de 1 pedido',    ok: false } },
+            { name: 'Sobre DOC-012',   detail: 'Mostrador principal',            qty: '1 sobre', qtyLabel: 'pedido', checked: false, progress: { pct: 0, label: '0 sobres recogidos de 1 pedido', ok: false } }
+          ],
+          footerNote: 'Tolerancia activa: se permiten hasta 10 kg adicionales. Verifica el estado del embalaje antes de confirmar.',
+          footerStyle: 'background:var(--col-paqueteria-soft);color:var(--col-paqueteria-dark)',
+          resumen: { total: '1 paquete + 1 sobre', recogido: '1 paquete + 0 sobres', pendiente: '0 paquetes + 1 sobre', estado: 'En progreso', estadoClass: 'warning' }
+        }
+      };
+
+      var cfg = CFG[tipo] || CFG.farmacia;
+      var completados = cfg.items.filter(function(i) { return i.checked; }).length;
+      var allDone = completados === cfg.items.length;
+
+      function renderItem(item) {
+        var progressHTML = '';
+        if (item.progress !== null) {
+          progressHTML = '<div class="progress-wrap">'
+            + '<div class="progress-bar"><div class="progress-fill" style="width:' + item.progress.pct + '%"></div></div>'
+            + '<div class="progress-label' + (item.progress.ok ? ' ok' : '') + '">' + item.progress.label + '</div>'
+            + '</div>';
+        }
+        return '<div class="picking-item">'
+          + '<div class="item-check' + (item.checked ? ' checked' : '') + '" onclick="toggleCheck(this)">'
+          + '<svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9 10.5,3" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+          + '</div>'
+          + '<div class="item-info">'
+          + '<div class="item-name">' + item.name + '</div>'
+          + '<div class="item-detail">' + item.detail + '</div>'
+          + progressHTML
+          + '</div>'
+          + '<div class="item-qty">'
+          + '<div class="qty-pedido">' + item.qty + '</div>'
+          + '<div class="qty-sub">' + item.qtyLabel + '</div>'
+          + '</div>'
+          + '</div>';
+      }
+
+      var html = '<div class="page-header fade-in">'
+        + '<div>'
+        + '<h1>' + cfg.title + ' <span style="font-size:18px;font-weight:400;color:var(--gray-600)">— ' + (ordenActual || cfg.ordenLabel) + '</span></h1>'
+        + '<p>' + cfg.meta + '</p>'
+        + '</div>'
+        + '<span class="estado-pill estado-preparando">' + cfg.statusLabel + '</span>'
+        + '</div>'
+
+        + '<div class="picking-grid fade-in-2">'
+
+        + '<div class="panel-card">'
+        + '<div class="panel-card-header">'
+        + '<span class="panel-card-title">Ítems a recoger</span>'
+        + '<span class="panel-card-meta">' + completados + ' de ' + cfg.items.length + ' completados</span>'
+        + '</div>'
+        + cfg.items.map(renderItem).join('')
+        + '<div class="alerta-tolerancia" style="' + cfg.footerStyle + '">' + cfg.footerNote + '</div>'
+        + '</div>'
+
+        + '<div class="panel-card">'
+        + '<div class="resumen-section">'
+        + '<div class="resumen-title">Resumen de picking</div>'
+        + '<span id="orden-id" data-id="1042" style="display:none"></span>'
+        + '<div class="resumen-row"><span class="resumen-label">Total pedido</span><span class="resumen-val">' + cfg.resumen.total + '</span></div>'
+        + '<div class="resumen-row"><span class="resumen-label">Recogido hasta ahora</span><span class="resumen-val ok">' + cfg.resumen.recogido + '</span></div>'
+        + '<div class="resumen-row"><span class="resumen-label">Pendiente</span><span class="resumen-val ' + cfg.resumen.estadoClass + '">' + cfg.resumen.pendiente + '</span></div>'
+        + '<hr class="divider">'
+        + '<div class="resumen-row"><span class="resumen-label">Estado</span><span class="resumen-val ' + cfg.resumen.estadoClass + '">' + cfg.resumen.estado + '</span></div>'
+        + '</div>'
+        + '<div class="resumen-section">'
+        + '<button class="btn btn-dark btn-full" id="btn-confirmar" disabled onclick="confirmarPicking()">Confirmar picking</button>'
+        + '<p class="btn-hint" id="btn-hint">Marca todos los ítems para continuar</p>'
+        + '<button class="btn btn-outline btn-full" onclick="window.location=\'proveedor.html\'">Cancelar y volver</button>'
+        + '</div>'
+        + '</div>'
+
+        + '</div>';
+
+      document.getElementById('main-content').innerHTML = html;
+    })();
+  </script>
+
+  <script src="../js/picking.js?v=2"></script>
+</body>
+</html>

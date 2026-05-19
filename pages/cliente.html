@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ágora — Panel Cliente</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/tema.js"></script>
+  <style>
+    .catalogo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .producto-card {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .producto-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+    .producto-img {
+      height: 160px;
+      overflow: hidden;
+    }
+
+    .producto-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .producto-img.tecnico      { background: var(--col-tecnico-soft); }
+    .producto-img.farmacia     { background: var(--col-farmacia-soft); }
+    .producto-img.paqueteria   { background: var(--col-paqueteria-soft); }
+    .producto-img.restaurante  { background: var(--col-restaurante-soft); }
+
+    .producto-body { padding: 14px 16px; }
+    .producto-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .producto-body p  { font-size: 12px; color: var(--gray-600); margin-bottom: 12px; }
+
+    .producto-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .precio {
+      font-family: 'Syne', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .btn-sm {
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    /* Filtros */
+    .filtros {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .filtro-btn {
+      padding: 8px 18px;
+      border-radius: 100px;
+      border: 1.5px solid var(--gray-200);
+      background: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--gray-600);
+    }
+
+    .filtro-btn:hover { border-color: var(--gray-600); color: var(--gray-900); }
+    .filtro-btn.activo-tecnico    { background: var(--col-tecnico);    color: #fff; border-color: var(--col-tecnico); }
+    .filtro-btn.activo-farmacia   { background: var(--col-farmacia);   color: #fff; border-color: var(--col-farmacia); }
+    .filtro-btn.activo-paqueteria { background: var(--col-paqueteria); color: #fff; border-color: var(--col-paqueteria); }
+    .filtro-btn.activo-restaurante{ background: var(--col-restaurante);color: #fff; border-color: var(--col-restaurante); }
+    .filtro-btn.activo-todos      { background: var(--gray-900);       color: #fff; border-color: var(--gray-900); }
+
+    /* Pedidos list */
+    .pedido-item {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .pedido-item:hover { border-color: var(--gray-400); box-shadow: var(--shadow-sm); }
+
+    .pedido-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .pedido-icon.tecnico     { background: var(--col-tecnico-soft); }
+    .pedido-icon.farmacia    { background: var(--col-farmacia-soft); }
+    .pedido-icon.paqueteria  { background: var(--col-paqueteria-soft); }
+    .pedido-icon.restaurante { background: var(--col-restaurante-soft); }
+
+    .pedido-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .pedido-info p  { font-size: 12px; color: var(--gray-600); }
+
+    .pedido-meta { text-align: right; }
+    .pedido-meta .precio { font-size: 15px; }
+    .pedido-meta p { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+
+    /* Detalle pedido en modal */
+    .correos-log {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .correo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--gray-100);
+      border-radius: var(--radius-sm);
+    }
+
+    .correo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--col-farmacia);
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    .correo-item p { font-size: 12px; color: var(--gray-600); line-height: 1.5; }
+    .correo-item .correo-hora { font-size: 11px; color: var(--gray-400); }
+
+    /* ── Modal de personalización de comida ── */
+    .opcion-grupo { margin-bottom: 18px; }
+    .opcion-grupo-titulo {
+      font-size: 11px; font-weight: 700; color: var(--gray-600);
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;
+    }
+    .opciones-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .opcion-pill {
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--gray-200);
+      background: #fff;
+      font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; transition: all 0.15s;
+      color: var(--gray-900);
+      line-height: 1.4; text-align: center;
+    }
+    .opcion-pill:hover:not(.agotado) { border-color: var(--col-restaurante); }
+    .opcion-pill.seleccionado {
+      background: var(--col-restaurante-soft);
+      border-color: var(--col-restaurante);
+      color: var(--col-restaurante-dark); font-weight: 600;
+    }
+    .opcion-pill.agotado { opacity: 0.45; cursor: not-allowed; }
+    .opcion-pill .pill-precio { display: block; font-size: 11px; color: var(--gray-600); font-weight: 400; }
+    .opcion-pill.seleccionado .pill-precio { color: var(--col-restaurante-dark); }
+    .opcion-pill .stock-aviso { display: block; font-size: 10px; color: var(--col-tecnico-dark); font-weight: 500; }
+
+    html[data-theme="dark"] .opcion-pill { background: #252320; border-color: #3A3835; color: var(--gray-900); }
+    html[data-theme="dark"] .opcion-pill.seleccionado { background: #3D1A20; border-color: var(--col-restaurante); }
+
+    .opcion-grupo-info { font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--gray-400); margin-left: 4px; }
+
+    .opcion-toggle {
+      padding: 7px 13px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid;
+      font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; transition: all 0.15s; line-height: 1;
+    }
+    .opcion-toggle.incluido  { background: var(--col-farmacia-soft); border-color: var(--col-farmacia); color: var(--col-farmacia-dark); }
+    .opcion-toggle.desactivado { background: var(--gray-100); border-color: var(--gray-200); color: var(--gray-400); text-decoration: line-through; }
+    html[data-theme="dark"] .opcion-toggle.incluido    { background: #1a3d2b; border-color: #2a5c3f; color: #6ee09a; }
+    html[data-theme="dark"] .opcion-toggle.desactivado { background: #252320; border-color: #3A3835; color: #6B6761; }
+
+    /* ── Modal de calificación ── */
+    .stars-row {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin: 18px 0 14px;
+    }
+    .star-btn {
+      font-size: 38px;
+      cursor: pointer;
+      color: var(--gray-200);
+      transition: color 0.1s, transform 0.12s;
+      background: none;
+      border: none;
+      padding: 0;
+      line-height: 1;
+    }
+    .star-btn.activo { color: #F5A623; }
+    .star-btn:hover  { transform: scale(1.2); }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">
+      <img id="logo-img" src="../imagenes/logo/agoraN.png" alt="Ágora" style="height:48px;vertical-align:middle">
+    </a>
+    <ul class="navbar-links">
+      <li><a href="#catalogo" onclick="showSection('catalogo')">Catálogo</a></li>
+      <li><a href="#pedidos" onclick="showSection('pedidos')">Mis pedidos</a></li>
+    </ul>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="menu-toggle" onclick="toggleSidebar()" title="Menú">☰</button>
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTema()" aria-label="Activar modo oscuro"></button>
+      <div style="font-size:13px;color:var(--gray-600);display:flex;align-items:center;gap:8px">Hola, <strong style="color:var(--gray-900)" id="navbar-nombre">Usuario</strong></div>
+      <button onclick="abrirPerfil()" id="navbar-avatar" title="Mi perfil" style="width:34px;height:34px;border-radius:50%;background:var(--col-paqueteria);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;border:none;cursor:pointer;transition:opacity 0.15s" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">U</button>
+    </div>
+  </nav>
+
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">Cliente</div>
+      <button class="sidebar-item activo" onclick="showSection('catalogo'); setActivo(this)">
+        <span class="sidebar-icon" aria-hidden="true">🛍️</span> Catálogo
+      </button>
+      <button class="sidebar-item" onclick="showSection('pedidos'); setActivo(this)">
+        <span class="sidebar-icon" aria-hidden="true">📋</span> Mis pedidos
+      </button>
+      <button class="sidebar-item" onclick="showSection('seguimiento'); setActivo(this)">
+        <span class="sidebar-icon" aria-hidden="true">📍</span> Seguimiento
+      </button>
+
+      <div class="sidebar-section" style="margin-top:16px">Categorías</div>
+      <button class="sidebar-item" onclick="filtrarCatalogoPorSidebar('restaurante')">
+        <span class="sidebar-icon" aria-hidden="true">🍔</span> Restaurante
+      </button>
+      <button class="sidebar-item" onclick="filtrarCatalogoPorSidebar('tecnico')">
+        <span class="sidebar-icon" aria-hidden="true">🔧</span> Técnicos
+      </button>
+      <button class="sidebar-item" onclick="filtrarCatalogoPorSidebar('farmacia')">
+        <span class="sidebar-icon" aria-hidden="true">💊</span> Farmacia
+      </button>
+      <button class="sidebar-item" onclick="filtrarCatalogoPorSidebar('paqueteria')">
+        <span class="sidebar-icon" aria-hidden="true">📦</span> Paquetería
+      </button>
+
+      <div style="margin-top:auto;padding-top:24px;border-top:1px solid var(--gray-200)">
+        <button class="sidebar-item" onclick="showSection('ayuda'); setActivo(this)">
+          <span class="sidebar-icon" aria-hidden="true">❓</span> Ayuda
+        </button>
+        <a href="../index.html" class="sidebar-item">
+          <span class="sidebar-icon" aria-hidden="true">←</span> Volver al inicio
+        </a>
+      </div>
+    </aside>
+
+    <!-- Contenido principal -->
+    <main class="main-content">
+
+      <!-- ══ SECCIÓN CATÁLOGO ══ -->
+      <section id="sec-catalogo" class="fade-in">
+        <div class="page-header">
+          <div>
+            <h1>¿Qué necesitas hoy?</h1>
+            <p>Explora nuestros servicios disponibles</p>
+          </div>
+          <div style="position:relative">
+            <input type="text" id="busqueda-input" class="form-input" placeholder="🔍  Buscar servicio o producto..." style="width:280px;padding-left:16px" oninput="buscarProductos(this.value)">
+          </div>
+        </div>
+
+        <div class="filtros">
+          <button class="filtro-btn activo-todos" onclick="filtrarCatalogo('todos', this)">Todos</button>
+          <button class="filtro-btn" onclick="filtrarCatalogo('restaurante', this)">🍔 Restaurante</button>
+          <button class="filtro-btn" onclick="filtrarCatalogo('tecnico', this)">🔧 Técnicos</button>
+          <button class="filtro-btn" onclick="filtrarCatalogo('farmacia', this)">💊 Farmacia</button>
+          <button class="filtro-btn" onclick="filtrarCatalogo('paqueteria', this)">📦 Paquetería</button>
+        </div>
+
+        <div class="catalogo-grid" id="catalogo-grid">
+
+          <!-- Restaurante -->
+          <div class="producto-card" data-cat="restaurante">
+            <div class="producto-img restaurante"><img src="https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=600" alt="Combo Hamburguesa"></div>
+            <div class="producto-body">
+              <div class="badge badge-restaurante" style="margin-bottom:8px">Restaurante</div>
+              <h4>Hamburguesa</h4>
+              <p>Sencilla o doble · Res, pollo o cerdo · Gaseosa a elección.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-restaurante)">Desde $18.000</span>
+                <button class="btn-sm btn-restaurante" onclick="abrirModalComida('hamburguesa')">Pedir</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="producto-card" data-cat="restaurante">
+            <div class="producto-img restaurante"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=600" alt="Pizza Margarita"></div>
+            <div class="producto-body">
+              <div class="badge badge-restaurante" style="margin-bottom:8px">Restaurante</div>
+              <h4>Pizza</h4>
+              <p>Personal, mediana o familiar · Varios sabores · Gaseosa opcional.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-restaurante)">Desde $22.000</span>
+                <button class="btn-sm btn-restaurante" onclick="abrirModalComida('pizza')">Pedir</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="producto-card" data-cat="restaurante">
+            <div class="producto-img restaurante"><img src="https://images.unsplash.com/photo-1562967914-608f82629710?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=600" alt="Pollo Broaster x2"></div>
+            <div class="producto-body">
+              <div class="badge badge-restaurante" style="margin-bottom:8px">Restaurante</div>
+              <h4>Pollo Broaster</h4>
+              <p>Alitas, muslos o combo · Acompañamiento a elección · Gaseosa opcional.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-restaurante)">Desde $22.000</span>
+                <button class="btn-sm btn-restaurante" onclick="abrirModalComida('pollo')">Pedir</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Técnicos -->
+          <div class="producto-card" data-cat="tecnico">
+            <div class="producto-img tecnico"><img src="https://images.unsplash.com/photo-1676210133055-eab6ef033ce3?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=600" alt="Plomería general"></div>
+            <div class="producto-body">
+              <div class="badge badge-tecnico" style="margin-bottom:8px">Técnico</div>
+              <h4>Plomería general</h4>
+              <p>Reparación de tuberías, grifos y desagües en tu hogar.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-tecnico)">$45.000</span>
+                <button class="btn-sm btn-tecnico" onclick="abrirModal('Plomería general','tecnico','$45.000')">Solicitar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="producto-card" data-cat="tecnico">
+            <div class="producto-img tecnico"><img src="https://images.unsplash.com/photo-1621905251918-48416bd8575a?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=600" alt="Electricidad residencial"></div>
+            <div class="producto-body">
+              <div class="badge badge-tecnico" style="margin-bottom:8px">Técnico</div>
+              <h4>Electricidad residencial</h4>
+              <p>Instalación, revisión y reparación de circuitos eléctricos.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-tecnico)">$55.000</span>
+                <button class="btn-sm btn-tecnico" onclick="abrirModal('Electricidad residencial','tecnico','$55.000')">Solicitar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="producto-card" data-cat="tecnico">
+            <div class="producto-img tecnico"><img src="https://images.unsplash.com/flagged/photo-1564767609213-c75ee685263a?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=600" alt="Cerrajería 24h"></div>
+            <div class="producto-body">
+              <div class="badge badge-tecnico" style="margin-bottom:8px">Técnico</div>
+              <h4>Cerrajería 24h</h4>
+              <p>Apertura de puertas y cambio de cerraduras de emergencia.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-tecnico)">$38.000</span>
+                <button class="btn-sm btn-tecnico" onclick="abrirModal('Cerrajería 24h','tecnico','$38.000')">Solicitar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Farmacia -->
+          <div class="producto-card" data-cat="farmacia">
+            <div class="producto-img farmacia"><img src="https://images.unsplash.com/photo-1550572017-4fcdbb59cc32?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=600" alt="Ibuprofeno 200mg x10"></div>
+            <div class="producto-body">
+              <div class="badge badge-farmacia" style="margin-bottom:8px">Farmacia</div>
+              <h4>Ibuprofeno 200mg x10</h4>
+              <p>Analgésico y antiinflamatorio de venta libre.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-farmacia)">$8.500</span>
+                <button class="btn-sm btn-farmacia" onclick="abrirModal('Ibuprofeno 200mg x10','farmacia','$8.500')">Pedir</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="producto-card" data-cat="farmacia">
+            <div class="producto-img farmacia"><img src="https://images.pexels.com/photos/5673523/pexels-photo-5673523.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Kit primeros auxilios"></div>
+            <div class="producto-body">
+              <div class="badge badge-farmacia" style="margin-bottom:8px">Farmacia</div>
+              <h4>Kit primeros auxilios</h4>
+              <p>Vendas, antiséptico, tijeras y guantes descartables.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-farmacia)">$22.000</span>
+                <button class="btn-sm btn-farmacia" onclick="abrirModal('Kit primeros auxilios','farmacia','$22.000')">Pedir</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="producto-card" data-cat="farmacia">
+            <div class="producto-img farmacia"><img src="https://images.pexels.com/photos/11348080/pexels-photo-11348080.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Vitamina C 1000mg x30"></div>
+            <div class="producto-body">
+              <div class="badge badge-farmacia" style="margin-bottom:8px">Farmacia</div>
+              <h4>Vitamina C 1000mg x30</h4>
+              <p>Suplemento vitamínico de liberación sostenida.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-farmacia)">$18.000</span>
+                <button class="btn-sm btn-farmacia" onclick="abrirModal('Vitamina C 1000mg','farmacia','$18.000')">Pedir</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Paquetería -->
+          <div class="producto-card" data-cat="paqueteria">
+            <div class="producto-img paqueteria"><img src="https://images.pexels.com/photos/33411898/pexels-photo-33411898.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Envío express"></div>
+            <div class="producto-body">
+              <div class="badge badge-paqueteria" style="margin-bottom:8px">Paquetería</div>
+              <h4>Envío express (mismo día)</h4>
+              <p>Recolección y entrega en menos de 4 horas dentro de la ciudad.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-paqueteria)">$15.000</span>
+                <button class="btn-sm btn-paqueteria" onclick="abrirModal('Envío express','paqueteria','$15.000')">Enviar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="producto-card" data-cat="paqueteria">
+            <div class="producto-img paqueteria"><img src="https://images.unsplash.com/photo-1760800690644-dc6c71a853eb?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=600" alt="Envío estándar"></div>
+            <div class="producto-body">
+              <div class="badge badge-paqueteria" style="margin-bottom:8px">Paquetería</div>
+              <h4>Envío estándar (24h)</h4>
+              <p>Entrega al día siguiente con rastreo y alertas por correo.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-paqueteria)">$9.000</span>
+                <button class="btn-sm btn-paqueteria" onclick="abrirModal('Envío estándar','paqueteria','$9.000')">Enviar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="producto-card" data-cat="paqueteria">
+            <div class="producto-img paqueteria"><img src="https://images.unsplash.com/photo-1588384055355-6b1aa2d98a29?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=600" alt="Carga especial"></div>
+            <div class="producto-body">
+              <div class="badge badge-paqueteria" style="margin-bottom:8px">Paquetería</div>
+              <h4>Carga especial</h4>
+              <p>Para paquetes mayores a 20kg. Requiere programación previa.</p>
+              <div class="producto-footer">
+                <span class="precio" style="color:var(--col-paqueteria)">$35.000</span>
+                <button class="btn-sm btn-paqueteria" onclick="abrirModal('Carga especial','paqueteria','$35.000')">Enviar</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ══ SECCIÓN MIS PEDIDOS ══ -->
+      <section id="sec-pedidos" class="fade-in" style="display:none">
+        <div class="page-header">
+          <div>
+            <h1>Mis pedidos</h1>
+            <p>Historial de solicitudes realizadas</p>
+          </div>
+        </div>
+
+        <div class="pedido-item" role="button" tabindex="0" onclick="abrirSeguimiento('PED-007')" onkeydown="if(event.key==='Enter')abrirSeguimiento('PED-007')" aria-label="Ver pedido PED-007: Combo Hamburguesa">
+          <div class="pedido-icon restaurante" aria-hidden="true">🍔</div>
+          <div class="pedido-info" style="flex:1">
+            <h4>Combo Hamburguesa</h4>
+            <p>Sabor Express · hace 20 min</p>
+          </div>
+          <span class="estado-pill estado-preparando">Preparando</span>
+          <div class="pedido-meta">
+            <div class="precio">$28.000</div>
+            <p>PED-007</p>
+          </div>
+        </div>
+
+        <div class="pedido-item" role="button" tabindex="0" onclick="abrirSeguimiento('PED-001')" onkeydown="if(event.key==='Enter')abrirSeguimiento('PED-001')" aria-label="Ver pedido PED-001: Plomería general">
+          <div class="pedido-icon tecnico" aria-hidden="true">🔧</div>
+          <div class="pedido-info" style="flex:1">
+            <h4>Plomería general</h4>
+            <p>Técnico: Carlos Restrepo · hace 2 horas</p>
+          </div>
+          <span class="estado-pill estado-en-camino">En camino</span>
+          <div class="pedido-meta">
+            <div class="precio">$45.000</div>
+            <p>PED-001</p>
+          </div>
+        </div>
+
+        <div class="pedido-item" role="button" tabindex="0" onclick="abrirSeguimiento('PED-002')" onkeydown="if(event.key==='Enter')abrirSeguimiento('PED-002')" aria-label="Ver pedido PED-002: Ibuprofeno">
+          <div class="pedido-icon farmacia" aria-hidden="true">💊</div>
+          <div class="pedido-info" style="flex:1">
+            <h4>Ibuprofeno 400mg x10</h4>
+            <p>FarmaPlus · ayer a las 3:20pm</p>
+          </div>
+          <span class="estado-pill estado-entregado">Entregado</span>
+          <div class="pedido-meta">
+            <div class="precio">$8.500</div>
+            <p>PED-002</p>
+          </div>
+        </div>
+
+        <div class="pedido-item" role="button" tabindex="0" onclick="abrirSeguimiento('PED-003')" onkeydown="if(event.key==='Enter')abrirSeguimiento('PED-003')" aria-label="Ver pedido PED-003: Envío express">
+          <div class="pedido-icon paqueteria" aria-hidden="true">📦</div>
+          <div class="pedido-info" style="flex:1">
+            <h4>Envío express</h4>
+            <p>EnvíoRápido · hace 30 min</p>
+          </div>
+          <span class="estado-pill estado-preparando">Preparando</span>
+          <div class="pedido-meta">
+            <div class="precio">$15.000</div>
+            <p>PED-003</p>
+          </div>
+        </div>
+
+        <div class="pedido-item" role="button" tabindex="0" onclick="abrirSeguimiento('PED-004')" onkeydown="if(event.key==='Enter')abrirSeguimiento('PED-004')" aria-label="Ver pedido PED-004: Electricidad residencial">
+          <div class="pedido-icon tecnico" aria-hidden="true">⚡</div>
+          <div class="pedido-info" style="flex:1">
+            <h4>Electricidad residencial</h4>
+            <p>TecnoFix · hace 3 días</p>
+          </div>
+          <span class="estado-pill estado-entregado">Finalizado</span>
+          <div class="pedido-meta">
+            <div class="precio">$55.000</div>
+            <p>PED-004</p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ══ SECCIÓN SEGUIMIENTO ══ -->
+      <section id="sec-seguimiento" class="fade-in" style="display:none">
+        <div class="page-header">
+          <div>
+            <h1>Seguimiento</h1>
+            <p id="seg-subtitle">Estado actual de tu pedido</p>
+          </div>
+          <span id="seg-estado-pill" class="estado-pill" style="font-size:14px;padding:8px 18px"></span>
+        </div>
+
+        <!-- Fila de info rápida -->
+        <div class="card" style="padding:20px 24px;margin-bottom:20px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:5px">Servicio</div>
+              <div id="seg-servicio" style="font-size:14px;font-weight:600;color:var(--gray-900)"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:5px">Proveedor</div>
+              <div id="seg-proveedor" style="font-size:14px;font-weight:600;color:var(--gray-900)"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:5px">Pedido</div>
+              <div id="seg-numero" style="font-size:14px;font-weight:600;color:var(--gray-900)"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:5px">Total</div>
+              <div id="seg-total" style="font-size:16px;font-weight:700"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card" style="padding:28px;margin-bottom:20px">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:24px">Progreso del pedido</h3>
+          <div class="timeline" id="seg-timeline"></div>
+        </div>
+
+        <!-- Correos -->
+        <div class="card" style="padding:28px">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:20px">📧 Correos enviados</h3>
+          <div class="correos-log" id="seg-correos"></div>
+        </div>
+      </section>
+
+      <!-- ══ SECCIÓN AYUDA ══ -->
+      <section id="sec-ayuda" class="fade-in" style="display:none">
+        <div class="page-header">
+          <div>
+            <h1>Ayuda y contacto</h1>
+            <p>Estamos aquí para asistirte</p>
+          </div>
+        </div>
+
+        <div class="grid-2col" style="margin-bottom:28px">
+
+          <div class="card" style="padding:24px">
+            <div style="font-size:28px;margin-bottom:14px" aria-hidden="true">📋</div>
+            <h3 style="font-size:16px;margin-bottom:8px">Preguntas frecuentes</h3>
+            <div style="display:flex;flex-direction:column;gap:0">
+              <details style="border-bottom:1px solid var(--gray-200);padding:12px 0">
+                <summary style="font-size:13px;font-weight:500;cursor:pointer;list-style:none;display:flex;justify-content:space-between">¿Cómo hago seguimiento a mi pedido? <span class="summary-indicator">+</span></summary>
+                <p style="font-size:12px;color:var(--gray-600);margin-top:8px;line-height:1.6">Ve a <strong>Mis pedidos</strong> y haz clic en el pedido que quieras revisar. Verás la línea de tiempo con cada estado y los correos que se te enviaron.</p>
+              </details>
+              <details style="border-bottom:1px solid var(--gray-200);padding:12px 0">
+                <summary style="font-size:13px;font-weight:500;cursor:pointer;list-style:none;display:flex;justify-content:space-between">¿Puedo cancelar un pedido? <span class="summary-indicator">+</span></summary>
+                <p style="font-size:12px;color:var(--gray-600);margin-top:8px;line-height:1.6">Sí, mientras el estado sea <strong>Recibido</strong>. Una vez el proveedor lo acepte, debes comunicarte directamente con el servicio al cliente.</p>
+              </details>
+              <details style="border-bottom:1px solid var(--gray-200);padding:12px 0">
+                <summary style="font-size:13px;font-weight:500;cursor:pointer;list-style:none;display:flex;justify-content:space-between">¿En qué zonas tienen cobertura? <span class="summary-indicator">+</span></summary>
+                <p style="font-size:12px;color:var(--gray-600);margin-top:8px;line-height:1.6">Actualmente operamos dentro del área metropolitana de Medellín. Estamos expandiendo cobertura próximamente.</p>
+              </details>
+              <details style="padding:12px 0">
+                <summary style="font-size:13px;font-weight:500;cursor:pointer;list-style:none;display:flex;justify-content:space-between">¿Cómo funciona la calificación? <span class="summary-indicator">+</span></summary>
+                <p style="font-size:12px;color:var(--gray-600);margin-top:8px;line-height:1.6">Al marcar un pedido como entregado, se abre automáticamente el formulario de calificación. Puedes darle de 1 a 5 estrellas y dejar un comentario opcional.</p>
+              </details>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card" style="padding:24px">
+              <div style="font-size:28px;margin-bottom:14px">✉️</div>
+              <h3 style="font-size:16px;margin-bottom:8px">Escríbenos</h3>
+              <p style="font-size:13px;color:var(--gray-600);margin-bottom:16px;line-height:1.5">¿Tienes un problema con un pedido o una sugerencia? Cuéntanos y te respondemos en menos de 24 horas.</p>
+              <div style="margin-bottom:12px">
+                <label class="form-label" for="ayuda-asunto">Asunto</label>
+                <select class="form-select" id="ayuda-asunto">
+                  <option value="">Selecciona el motivo</option>
+                  <option>Problema con un pedido</option>
+                  <option>Error al realizar el pago</option>
+                  <option>No recibí mi correo de confirmación</option>
+                  <option>Sugerencia o mejora</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              <div style="margin-bottom:12px">
+                <label class="form-label">Mensaje</label>
+                <textarea class="form-textarea" id="ayuda-mensaje" rows="3" placeholder="Describe tu situación con detalle..."></textarea>
+              </div>
+              <button class="btn btn-dark" style="width:100%;justify-content:center" onclick="enviarAyuda()">Enviar mensaje</button>
+            </div>
+
+            <div class="card" style="padding:20px">
+              <h3 style="font-size:15px;margin-bottom:14px">📞 Contacto directo</h3>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:12px;font-size:13px">
+                  <span style="font-size:20px">📱</span>
+                  <div><strong>WhatsApp</strong><br><span style="color:var(--gray-600)">+57 300 123 4567</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;font-size:13px">
+                  <span style="font-size:20px">📧</span>
+                  <div><strong>Correo</strong><br><span style="color:var(--gray-600)">agora.itm.grupo@gmail.com</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;font-size:13px">
+                  <span style="font-size:20px">🕐</span>
+                  <div><strong>Horario de atención</strong><br><span style="color:var(--gray-600)">Lunes a sábado · 8am – 8pm</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal: Crear pedido -->
+  <!-- Modal: Personalizar comida -->
+  <div class="modal-overlay" id="modal-comida">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h3 id="modal-comida-titulo">Personalizar pedido</h3>
+        <button class="modal-close" onclick="cerrarModalComida()">✕</button>
+      </div>
+      <div id="modal-comida-opciones"></div>
+      <div class="form-group">
+        <label class="form-label">Dirección de entrega</label>
+        <input type="text" class="form-input" id="modal-comida-dir" placeholder="Ej: Calle 50 #10-20, Medellín">
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div style="font-size:13px;color:var(--gray-600)">
+          Total: <strong id="modal-comida-precio" style="font-size:16px;color:var(--gray-900)">$0</strong>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="cerrarModalComida()">Cancelar</button>
+          <button class="btn btn-restaurante" onclick="confirmarComida()">Confirmar pedido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-pedido">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-titulo">Solicitar servicio</h3>
+        <button class="modal-close" onclick="cerrarModal()">✕</button>
+      </div>
+
+      <!-- Campo solo para paquetería: dirección de recolección -->
+      <div class="form-group" id="grupo-recoleccion" style="display:none">
+        <label class="form-label">📍 Dirección de recolección <span style="color:var(--col-paqueteria);font-weight:600">(Punto A — origen)</span></label>
+        <input type="text" class="form-input" id="modal-dir-recoleccion" placeholder="Ej: Carrera 45 #22-10, Medellín">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" id="modal-label-entrega">Dirección de entrega</label>
+        <input type="text" class="form-input" id="modal-dir-entrega" placeholder="Ej: Calle 50 #10-20, Medellín">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="modal-desc">Descripción o nota adicional</label>
+        <textarea class="form-textarea" id="modal-desc" placeholder="Describe con detalle lo que necesitas..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="modal-email">Correo para notificaciones</label>
+        <input type="email" class="form-input" id="modal-email" placeholder="tu@correo.com">
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div style="font-size:13px;color:var(--gray-600)">
+          Total: <strong id="modal-precio" style="font-size:16px;color:var(--gray-900)">$0</strong>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="cerrarModal()">Cancelar</button>
+          <button class="btn btn-dark" id="modal-btn-confirmar" onclick="confirmarPedido()">Confirmar pedido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Calificar pedido -->
+  <div class="modal-overlay" id="modal-calificar">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Calificar servicio</h3>
+        <button class="modal-close" onclick="cerrarModalCalificar()">✕</button>
+      </div>
+      <p style="text-align:center;font-size:14px;color:var(--gray-600);margin-bottom:2px">¿Cómo estuvo tu experiencia?</p>
+      <p id="modal-cal-nombre" style="text-align:center;font-weight:600;font-size:15px;margin-bottom:0"></p>
+      <div class="stars-row" id="stars-container">
+        <button class="star-btn" data-val="1" onclick="seleccionarEstrella(1)">★</button>
+        <button class="star-btn" data-val="2" onclick="seleccionarEstrella(2)">★</button>
+        <button class="star-btn" data-val="3" onclick="seleccionarEstrella(3)">★</button>
+        <button class="star-btn" data-val="4" onclick="seleccionarEstrella(4)">★</button>
+        <button class="star-btn" data-val="5" onclick="seleccionarEstrella(5)">★</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Comentario (opcional)</label>
+        <textarea class="form-textarea" id="cal-comentario" placeholder="Cuéntanos cómo fue tu experiencia..." rows="3"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+        <button class="btn btn-outline" onclick="cerrarModalCalificar()">Ahora no</button>
+        <button class="btn btn-dark" id="btn-enviar-cal" onclick="enviarCalificacion()" disabled>Enviar calificación</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Perfil del usuario -->
+  <div class="modal-overlay" id="modal-perfil">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-header">
+        <h3>Mi perfil</h3>
+        <button class="modal-close" onclick="cerrarPerfil()">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding:16px;background:var(--gray-100);border-radius:var(--radius-md)">
+        <div id="perfil-avatar" style="width:52px;height:52px;border-radius:50%;background:var(--col-paqueteria);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;flex-shrink:0">U</div>
+        <div>
+          <div style="font-size:15px;font-weight:600" id="perfil-nombre-display">Tomás Pérez</div>
+          <div style="font-size:12px;color:var(--gray-600)">Cliente · Ágora</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre completo</label>
+        <input type="text" class="form-input" id="perfil-nombre" placeholder="Tu nombre" value="Tomás Pérez">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <input type="email" class="form-input" id="perfil-correo" placeholder="tu@correo.com" value="tomas@correo.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Teléfono</label>
+        <input type="tel" class="form-input" id="perfil-telefono" placeholder="+57 300 000 0000" value="">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dirección principal</label>
+        <input type="text" class="form-input" id="perfil-direccion" placeholder="Ej: Calle 50 #10-20, Medellín" value="">
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">
+        <button class="btn btn-outline" style="color:#CC1A2A;border-color:#CC1A2A" onclick="cerrarSesion()">Cerrar sesión</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="cerrarPerfil()">Cancelar</button>
+          <button class="btn btn-dark" onclick="guardarPerfil()">Guardar cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span id="toast-icon">✓</span>
+    <span id="toast-msg">Pedido creado. Recibirás un correo de confirmación.</span>
+  </div>
+
+  <script>
+    // bfcache: si volvió con Atrás y ya cerró sesión, ir a login
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted && !localStorage.getItem('agora_sesion')) {
+        window.location.replace('login.html');
+      }
+    });
+
+    function showSection(id) {
+      ['catalogo','pedidos','seguimiento','ayuda'].forEach(s => {
+        document.getElementById('sec-' + s).style.display = s === id ? 'block' : 'none';
+      });
+    }
+
+    function setActivo(el) {
+      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('activo'));
+      el.classList.add('activo');
+    }
+
+    function filtrarCatalogo(cat, btn) {
+      const cards = document.querySelectorAll('#catalogo-grid .producto-card');
+      cards.forEach(c => {
+        c.style.display = (cat === 'todos' || c.dataset.cat === cat) ? 'block' : 'none';
+      });
+      if (btn) {
+        document.querySelectorAll('.filtro-btn').forEach(b => { b.className = 'filtro-btn'; });
+        btn.classList.add('activo-' + cat);
+      }
+      showSection('catalogo');
+    }
+
+    /* ══ MENÚ DE COMIDAS ══ */
+    const CARNES = [
+      { id: 'res',   label: 'Res',   precio: 0, stock: 'ok' },
+      { id: 'pollo', label: 'Pollo', precio: 0, stock: 'ok' },
+      { id: 'cerdo', label: 'Cerdo', precio: 0, stock: 'bajo' },
+    ];
+    const GASEOSAS = [
+      { id: 'sin',    label: 'Sin gaseosa', precio: 0,    stock: 'ok' },
+      { id: 'cola',   label: 'Coca-Cola',   precio: 4000, stock: 'ok' },
+      { id: 'pepsi',  label: 'Pepsi',       precio: 4000, stock: 'ok' },
+      { id: 'sprite', label: 'Sprite',      precio: 4000, stock: 'ok' },
+    ];
+
+    const menuConfig = {
+      hamburguesa: {
+        titulo: 'Hamburguesa — Personalizar',
+        grupos: [
+          { id: 'tamano', tipo: 'radio', requerido: true, label: 'Tamaño', opciones: [
+            { id: 'sencilla', label: 'Sencilla', precio: 18000, stock: 'ok' },
+            { id: 'doble',    label: 'Doble',    precio: 28000, stock: 'ok' },
+          ]},
+          { id: 'carne1', tipo: 'radio', requerido: true,
+            label: 'Tipo de carne', labelAlt: { tamano: 'doble', texto: 'Primera carne' },
+            opciones: CARNES },
+          { id: 'carne2', tipo: 'radio', requerido: true,
+            label: 'Segunda carne',
+            condicion: { grupo: 'tamano', valor: 'doble' },
+            opciones: CARNES },
+          { id: 'ingredientes', tipo: 'toggle', requerido: false,
+            label: 'Ingredientes', info: '— desactiva lo que no quieres',
+            opciones: [
+              { id: 'lechuga',   label: 'Lechuga'       },
+              { id: 'tomate',    label: 'Tomate'         },
+              { id: 'cebolla',   label: 'Cebolla'        },
+              { id: 'pepinillo', label: 'Pepinillos'     },
+              { id: 'queso',     label: 'Queso'          },
+              { id: 'salsa',     label: 'Salsa especial' },
+            ]},
+          { id: 'gaseosa', tipo: 'radio', requerido: false, label: 'Gaseosa (opcional)', opciones: GASEOSAS },
+        ]
+      },
+      pizza: {
+        titulo: 'Pizza — Personalizar',
+        grupos: [
+          { id: 'tamano', tipo: 'radio', requerido: true, label: 'Tamaño', opciones: [
+            { id: 'personal', label: 'Personal (6")',   precio: 22000, stock: 'ok' },
+            { id: 'mediana',  label: 'Mediana (8")',    precio: 35000, stock: 'ok' },
+            { id: 'familiar', label: 'Familiar (12")', precio: 52000, stock: 'ok' },
+          ]},
+          { id: 'sabor', tipo: 'radio', requerido: true, label: 'Sabor', opciones: [
+            { id: 'margarita', label: 'Margarita',           precio: 0,    stock: 'ok' },
+            { id: 'hawaiana',  label: 'Hawaiana',            precio: 0,    stock: 'bajo' },
+            { id: 'pepperoni', label: 'Pepperoni',           precio: 0,    stock: 'bajo' },
+            { id: 'bbq',       label: 'BBQ Pollo',           precio: 0,    stock: 'ok' },
+            { id: 'especial',  label: 'Especial de la casa', precio: 3000, stock: 'ok' },
+          ]},
+          { id: 'gaseosa', tipo: 'radio', requerido: false, label: 'Gaseosa (opcional)', opciones: GASEOSAS },
+        ]
+      },
+      pollo: {
+        titulo: 'Pollo Broaster — Personalizar',
+        grupos: [
+          { id: 'piezas', tipo: 'radio', requerido: true, label: 'Piezas', opciones: [
+            { id: 'alitas',  label: 'Alitas x6',  precio: 28000, stock: 'ok' },
+            { id: 'muslos',  label: 'Muslos x2',  precio: 32000, stock: 'bajo' },
+            { id: 'pechuga', label: 'Pechuga x1', precio: 22000, stock: 'agotado' },
+            { id: 'mixto',   label: 'Combo x4',   precio: 38000, stock: 'ok' },
+          ]},
+          { id: 'acomp', tipo: 'radio', requerido: true, label: 'Acompañamiento', opciones: [
+            { id: 'papas',    label: 'Papas fritas', precio: 0, stock: 'ok' },
+            { id: 'yuca',     label: 'Yuca frita',   precio: 0, stock: 'ok' },
+            { id: 'ensalada', label: 'Ensalada',      precio: 0, stock: 'ok' },
+          ]},
+          { id: 'salsa', tipo: 'radio', requerido: true, label: 'Salsa', opciones: [
+            { id: 'sin',     label: 'Sin salsa',    precio: 0, stock: 'ok' },
+            { id: 'bbq',     label: 'BBQ',          precio: 0, stock: 'ok' },
+            { id: 'miel',    label: 'Miel mostaza', precio: 0, stock: 'ok' },
+            { id: 'picante', label: 'Picante',      precio: 0, stock: 'ok' },
+          ]},
+          { id: 'gaseosa', tipo: 'radio', requerido: false, label: 'Gaseosa (opcional)', opciones: GASEOSAS },
+        ]
+      }
+    };
+
+    let comidaActual = {};
+
+    function abrirModalComida(tipo) {
+      comidaActual = { tipo, selecciones: {}, quitados: {} };
+      document.getElementById('modal-comida-titulo').textContent = menuConfig[tipo].titulo;
+      var p = JSON.parse(localStorage.getItem('agora_perfil') || '{}');
+      document.getElementById('modal-comida-dir').value = p.direccion || '';
+      renderModalComida();
+      document.getElementById('modal-comida').classList.add('abierto');
+    }
+
+    function renderModalComida() {
+      const grupos = menuConfig[comidaActual.tipo].grupos;
+      let html = '';
+      grupos.forEach(g => {
+        if (g.condicion) {
+          const dep = comidaActual.selecciones[g.condicion.grupo];
+          if (!dep || dep.id !== g.condicion.valor) return;
+        }
+        if (g.tipo === 'radio' && !comidaActual.selecciones[g.id]) {
+          const primera = g.opciones.find(o => o.stock !== 'agotado');
+          if (primera) comidaActual.selecciones[g.id] = { id: primera.id, precio: primera.precio };
+        }
+        html += g.tipo === 'toggle' ? _htmlToggle(g) : _htmlRadio(g);
+      });
+      document.getElementById('modal-comida-opciones').innerHTML = html;
+      actualizarPrecioComida();
+    }
+
+    function _htmlRadio(g) {
+      let label = g.label;
+      if (g.labelAlt) {
+        const dep = comidaActual.selecciones[g.labelAlt.tamano];
+        if (dep && dep.id === 'doble') label = g.labelAlt.texto;
+      }
+      const sel = comidaActual.selecciones[g.id];
+      let html = `<div class="opcion-grupo"><div class="opcion-grupo-titulo">${label}</div><div class="opciones-pills">`;
+      g.opciones.forEach(op => {
+        const agotado = op.stock === 'agotado';
+        const activo  = sel && sel.id === op.id;
+        let extra = '';
+        if (op.precio > 0 && !agotado) extra = `<span class="pill-precio">+$${op.precio.toLocaleString('es-CO')}</span>`;
+        if (agotado)            extra = `<span class="stock-aviso">✕ Agotado</span>`;
+        else if (op.stock === 'bajo') extra += `<span class="stock-aviso">⚠ Poco stock</span>`;
+        const click = agotado ? '' : `onclick="seleccionarOpcion('${g.id}','${op.id}',${op.precio})"`;
+        html += `<button class="opcion-pill${activo?' seleccionado':''}${agotado?' agotado':''}" ${click}>${op.label}${extra}</button>`;
+      });
+      return html + `</div></div>`;
+    }
+
+    function _htmlToggle(g) {
+      let html = `<div class="opcion-grupo"><div class="opcion-grupo-titulo">${g.label}<span class="opcion-grupo-info">${g.info||''}</span></div><div class="opciones-pills">`;
+      g.opciones.forEach(op => {
+        const quitado = !!comidaActual.quitados[op.id];
+        html += `<button class="opcion-toggle ${quitado?'desactivado':'incluido'}" onclick="toggleIngrediente('${op.id}',this)">${quitado?'✕':'✓'} ${op.label}</button>`;
+      });
+      return html + `</div></div>`;
+    }
+
+    function seleccionarOpcion(grupoId, opId, precio) {
+      comidaActual.selecciones[grupoId] = { id: opId, precio: precio };
+      if (comidaActual.tipo === 'hamburguesa' && grupoId === 'tamano' && opId === 'sencilla')
+        delete comidaActual.selecciones['carne2'];
+      renderModalComida();
+    }
+
+    function toggleIngrediente(id, el) {
+      comidaActual.quitados[id] = !comidaActual.quitados[id];
+      const quitado = comidaActual.quitados[id];
+      el.className = 'opcion-toggle ' + (quitado ? 'desactivado' : 'incluido');
+      el.textContent = (quitado ? '✕ ' : '✓ ') + el.textContent.replace(/^[✕✓] /, '');
+    }
+
+    function actualizarPrecioComida() {
+      let total = 0;
+      Object.values(comidaActual.selecciones).forEach(s => { if (s) total += (s.precio || 0); });
+      document.getElementById('modal-comida-precio').textContent = '$' + total.toLocaleString('es-CO');
+    }
+
+    function cerrarModalComida() {
+      document.getElementById('modal-comida').classList.remove('abierto');
+    }
+
+    function confirmarComida() {
+      const grupos = menuConfig[comidaActual.tipo].grupos;
+      for (const g of grupos) {
+        if (g.condicion) {
+          const dep = comidaActual.selecciones[g.condicion.grupo];
+          if (!dep || dep.id !== g.condicion.valor) continue;
+        }
+        if (g.requerido && !comidaActual.selecciones[g.id]) {
+          mostrarToast('⚠', 'Selecciona todas las opciones requeridas.');
+          return;
+        }
+      }
+      cerrarModalComida();
+      mostrarToast('✓', 'Pedido creado. Recibirás un correo de confirmación.');
+      setTimeout(() => showSection('pedidos'), 1500);
+    }
+
+    let catActual = '';
+    function abrirModal(nombre, cat, precio) {
+      catActual = cat;
+      document.getElementById('modal-titulo').textContent = nombre;
+      document.getElementById('modal-precio').textContent = precio;
+
+      // Campos específicos de paquetería
+      const esPaqueteria = cat === 'paqueteria';
+      document.getElementById('grupo-recoleccion').style.display = esPaqueteria ? 'block' : 'none';
+      document.getElementById('modal-dir-recoleccion').value = '';
+      // Autocompletar dirección desde perfil guardado
+      var perfilGuardado = JSON.parse(localStorage.getItem('agora_perfil') || '{}');
+      document.getElementById('modal-dir-entrega').value = perfilGuardado.direccion || '';
+      document.getElementById('modal-label-entrega').innerHTML = esPaqueteria
+        ? '📦 Dirección de entrega <span style="color:var(--col-paqueteria);font-weight:600">(Punto B — destino)</span>'
+        : 'Dirección de entrega';
+
+      const btn = document.getElementById('modal-btn-confirmar');
+      btn.className = 'btn btn-' + cat;
+      document.getElementById('modal-pedido').classList.add('abierto');
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal-pedido').classList.remove('abierto');
+    }
+
+    function confirmarPedido() {
+      var dir = document.getElementById('modal-dir-entrega').value.trim();
+      var email = document.getElementById('modal-email').value.trim();
+      if (!dir) {
+        mostrarToast('⚠', 'Ingresa la dirección de entrega para continuar.', true);
+        return;
+      }
+      if (catActual === 'paqueteria') {
+        var recoleccion = document.getElementById('modal-dir-recoleccion').value.trim();
+        if (!recoleccion) {
+          mostrarToast('⚠', 'Ingresa la dirección de recolección (origen).', true);
+          return;
+        }
+      }
+      cerrarModal();
+      mostrarToast('✓', 'Pedido creado. Recibirás un correo de confirmación.');
+      setTimeout(() => showSection('pedidos'), 1500);
+    }
+
+    const datosPedidos = {
+      'PED-007': {
+        nombre: 'Combo Hamburguesa', proveedor: 'Sabor Express', precio: '$28.000', cat: 'restaurante',
+        estado: 'En preparación', estadoClass: 'estado-procesando',
+        pasos: [
+          { label: 'Pedido recibido',  time: 'Hoy a las 11:40am',                  estado: 'done' },
+          { label: 'En preparación',   time: 'Restaurante cocinando · 11:42am',     estado: 'activo' },
+          { label: 'En camino',        time: 'Pendiente',                            estado: 'pendiente' },
+          { label: 'Entregado',        time: 'Pendiente',                            estado: 'pendiente' },
+        ],
+        correos: [
+          { label: 'Pedido confirmado', desc: 'Tu solicitud fue recibida.',                        time: 'Hoy · 11:40am' },
+          { label: 'En preparación',   desc: 'El restaurante está preparando tu pedido.',          time: 'Hoy · 11:42am', highlight: true },
+        ]
+      },
+      'PED-001': {
+        nombre: 'Plomería general', proveedor: 'TecnoFix', precio: '$45.000', cat: 'tecnico',
+        estado: 'En camino', estadoClass: 'estado-en-camino',
+        pasos: [
+          { label: 'Pedido recibido',   time: 'Hoy a las 10:15am',                   estado: 'done' },
+          { label: 'Técnico asignado',  time: 'Carlos Restrepo aceptó · 10:22am',    estado: 'done' },
+          { label: 'En camino',         time: 'Carlos salió hace 8 minutos · 11:47am', estado: 'activo' },
+          { label: 'En servicio',       time: 'Pendiente',                             estado: 'pendiente' },
+          { label: 'Finalizado',        time: 'Pendiente',                             estado: 'pendiente' },
+        ],
+        correos: [
+          { label: 'Pedido confirmado', desc: 'Tu solicitud fue recibida.',                        time: 'Hoy · 10:15am' },
+          { label: 'Técnico asignado',  desc: 'Carlos Restrepo atenderá tu solicitud.',            time: 'Hoy · 10:22am' },
+          { label: '¡En camino!',       desc: 'Carlos salió hacia tu dirección.',                 time: 'Hoy · 11:47am', highlight: true },
+        ]
+      },
+      'PED-002': {
+        nombre: 'Ibuprofeno 400mg x10', proveedor: 'FarmaPlus', precio: '$8.500', cat: 'farmacia',
+        estado: 'Entregado', estadoClass: 'estado-entregado',
+        pasos: [
+          { label: 'Pedido recibido', time: 'Ayer a las 3:20pm',              estado: 'done' },
+          { label: 'Procesando',      time: 'Farmacia alistó el pedido · 3:25pm', estado: 'done' },
+          { label: 'En camino',       time: 'Mensajero en camino · 3:50pm',    estado: 'done' },
+          { label: 'Entregado',       time: 'Ayer a las 4:10pm',               estado: 'done' },
+        ],
+        correos: [
+          { label: 'Pedido confirmado', desc: 'Tu solicitud fue recibida.',              time: 'Ayer · 3:20pm' },
+          { label: 'Procesando',        desc: 'FarmaPlus alistó tu pedido.',             time: 'Ayer · 3:25pm' },
+          { label: 'Entregado',         desc: 'Tu pedido fue entregado exitosamente.',   time: 'Ayer · 4:10pm', highlight: true },
+        ]
+      },
+      'PED-003': {
+        nombre: 'Envío express', proveedor: 'EnvíoRápido', precio: '$15.000', cat: 'paqueteria',
+        estado: 'En tránsito', estadoClass: 'estado-en-camino',
+        pasos: [
+          { label: 'Pedido recibido', time: 'Hoy a las 11:10am',              estado: 'done' },
+          { label: 'Recogido',        time: 'Paquete retirado · 11:25am',     estado: 'done' },
+          { label: 'En tránsito',     time: 'En camino a destino · 11:55am',  estado: 'activo' },
+          { label: 'Entregado',       time: 'Pendiente',                       estado: 'pendiente' },
+        ],
+        correos: [
+          { label: 'Pedido confirmado', desc: 'Tu solicitud fue recibida.',          time: 'Hoy · 11:10am' },
+          { label: 'Recogido',          desc: 'EnvíoRápido retiró tu paquete.',     time: 'Hoy · 11:25am' },
+          { label: '¡En tránsito!',     desc: 'Tu paquete está en camino.',         time: 'Hoy · 11:55am', highlight: true },
+        ]
+      },
+      'PED-004': {
+        nombre: 'Electricidad residencial', proveedor: 'TecnoFix', precio: '$55.000', cat: 'tecnico',
+        estado: 'Finalizado', estadoClass: 'estado-entregado',
+        pasos: [
+          { label: 'Pedido recibido',  time: 'Hace 3 días · 9:00am',         estado: 'done' },
+          { label: 'Técnico asignado', time: 'Miguel Torres aceptó · 9:10am', estado: 'done' },
+          { label: 'En camino',        time: 'Miguel llegó · 10:05am',        estado: 'done' },
+          { label: 'En servicio',      time: 'Trabajo en curso · 10:20am',    estado: 'done' },
+          { label: 'Finalizado',       time: 'Servicio completado · 12:45pm', estado: 'done' },
+        ],
+        correos: [
+          { label: 'Pedido confirmado', desc: 'Tu solicitud fue recibida.',                       time: 'Hace 3 días · 9:00am' },
+          { label: 'Técnico asignado',  desc: 'Miguel Torres atendió tu solicitud.',              time: 'Hace 3 días · 9:10am' },
+          { label: 'Finalizado',        desc: 'El servicio fue completado exitosamente.',         time: 'Hace 3 días · 12:45pm', highlight: true },
+        ]
+      },
+    };
+
+    function abrirSeguimiento(id) {
+      showSection('seguimiento');
+      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('activo'));
+
+      const p = datosPedidos[id];
+      if (!p) return;
+
+      document.getElementById('seg-subtitle').textContent = 'Estado actual de tu pedido ' + id;
+      const pill = document.getElementById('seg-estado-pill');
+      pill.textContent = p.estado;
+      pill.className = 'estado-pill ' + p.estadoClass;
+
+      document.getElementById('seg-servicio').textContent = p.nombre;
+      document.getElementById('seg-proveedor').textContent = p.proveedor;
+      document.getElementById('seg-numero').textContent = id;
+      const totalEl = document.getElementById('seg-total');
+      totalEl.textContent = p.precio;
+      totalEl.style.color = 'var(--col-' + p.cat + ')';
+
+      const timeline = document.getElementById('seg-timeline');
+      timeline.innerHTML = p.pasos.map((paso, i) => {
+        const esUltimo = i === p.pasos.length - 1;
+        const dotClass   = paso.estado === 'done' ? 'completado' : paso.estado === 'activo' ? 'activo' : 'pendiente';
+        const lineaClass = paso.estado === 'done' ? 'completada' : '';
+        const dotSymbol  = paso.estado === 'done' ? '✓' : paso.estado === 'activo' ? '→' : '○';
+        const labelColor = paso.estado === 'activo' ? 'color:var(--col-' + p.cat + ')' : '';
+        const opacity    = paso.estado === 'pendiente' ? 'opacity:0.45' : '';
+        return `
+          <div class="timeline-item">
+            <div style="position:relative">
+              <div class="timeline-dot ${dotClass}">${dotSymbol}</div>
+              ${!esUltimo ? `<div class="timeline-linea ${lineaClass}"></div>` : ''}
+            </div>
+            <div class="timeline-content" style="${opacity}">
+              <h4 style="${labelColor}">${paso.label}</h4>
+              <p>${paso.time}</p>
+            </div>
+          </div>`;
+      }).join('');
+
+      const correos = document.getElementById('seg-correos');
+      correos.innerHTML = p.correos.map(c => `
+        <div class="correo-item">
+          <div class="correo-dot" ${c.highlight ? 'style="background:var(--col-' + p.cat + ')"' : ''}></div>
+          <div>
+            <p><strong>${c.label}</strong> — ${c.desc}</p>
+            <span class="correo-hora">${c.time}</span>
+          </div>
+        </div>`).join('');
+
+      // Mostrar modal de calificación si el pedido está entregado
+      if (p.estadoClass === 'estado-entregado') {
+        setTimeout(() => abrirModalCalificar(id, p.nombre), 700);
+      }
+    }
+
+    // ── Calificaciones ──
+    const calificaciones = {};
+    let calPedidoActual = null;
+    let estrellasSeleccionadas = 0;
+
+    function abrirModalCalificar(id, nombre) {
+      calPedidoActual = id;
+      estrellasSeleccionadas = 0;
+      document.getElementById('modal-cal-nombre').textContent = nombre + ' · ' + id;
+      document.getElementById('cal-comentario').value = '';
+      document.getElementById('btn-enviar-cal').disabled = true;
+      document.querySelectorAll('.star-btn').forEach(s => s.classList.remove('activo'));
+      document.getElementById('modal-calificar').classList.add('abierto');
+    }
+
+    function cerrarModalCalificar() {
+      document.getElementById('modal-calificar').classList.remove('abierto');
+    }
+
+    function seleccionarEstrella(val) {
+      estrellasSeleccionadas = val;
+      document.querySelectorAll('.star-btn').forEach(s => {
+        s.classList.toggle('activo', parseInt(s.dataset.val) <= val);
+      });
+      document.getElementById('btn-enviar-cal').disabled = false;
+    }
+
+    function enviarCalificacion() {
+      calificaciones[calPedidoActual] = {
+        estrellas: estrellasSeleccionadas,
+        comentario: document.getElementById('cal-comentario').value.trim()
+      };
+      cerrarModalCalificar();
+      mostrarToast('★', 'Gracias por tu calificación de ' + estrellasSeleccionadas + ' estrella' + (estrellasSeleccionadas > 1 ? 's' : '') + '.');
+    }
+
+    function mostrarToast(icon, msg, esError) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-icon').textContent = icon;
+      document.getElementById('toast-msg').textContent = msg;
+      t.classList.toggle('toast-error', !!esError);
+      t.classList.add('visible');
+      setTimeout(() => t.classList.remove('visible'), 3500);
+    }
+
+    function filtrarCatalogoPorSidebar(cat) {
+      // Busca el botón de filtro correspondiente y activa filtrarCatalogo con él
+      const btns = document.querySelectorAll('.filtro-btn');
+      let btn = null;
+      btns.forEach(b => { if (b.textContent.toLowerCase().includes(cat)) btn = b; });
+      filtrarCatalogo(cat, btn);
+      showSection('catalogo');
+    }
+
+    // ── Búsqueda funcional ──
+    function buscarProductos(q) {
+      const texto = q.toLowerCase().trim();
+      document.querySelectorAll('#catalogo-grid .producto-card').forEach(function(card) {
+        const nombre = (card.querySelector('h4') || {}).textContent || '';
+        const desc   = (card.querySelector('p')  || {}).textContent || '';
+        const visible = !texto || nombre.toLowerCase().includes(texto) || desc.toLowerCase().includes(texto);
+        card.style.display = visible ? 'block' : 'none';
+      });
+    }
+
+    // ── Perfil ──
+    var perfilData = JSON.parse(localStorage.getItem('agora_perfil') || '{}');
+
+    function actualizarAvatarUI() {
+      var nombre = perfilData.nombre || 'Usuario';
+      var inicial = nombre.charAt(0).toUpperCase();
+      document.getElementById('navbar-nombre').textContent = nombre;
+      document.getElementById('navbar-avatar').textContent = inicial;
+      document.getElementById('perfil-avatar').textContent = inicial;
+    }
+    actualizarAvatarUI();
+
+    function abrirPerfil() {
+      var d = perfilData;
+      document.getElementById('perfil-nombre').value    = d.nombre    || '';
+      document.getElementById('perfil-correo').value    = d.correo    || '';
+      document.getElementById('perfil-telefono').value  = d.telefono  || '';
+      document.getElementById('perfil-direccion').value = d.direccion || '';
+      document.getElementById('perfil-nombre-display').textContent = d.nombre || 'Usuario';
+      actualizarAvatarUI();
+      document.getElementById('modal-perfil').classList.add('abierto');
+    }
+
+    function cerrarPerfil() {
+      document.getElementById('modal-perfil').classList.remove('abierto');
+    }
+
+    function guardarPerfil() {
+      perfilData = {
+        nombre:    document.getElementById('perfil-nombre').value.trim(),
+        correo:    document.getElementById('perfil-correo').value.trim(),
+        telefono:  document.getElementById('perfil-telefono').value.trim(),
+        direccion: document.getElementById('perfil-direccion').value.trim()
+      };
+      localStorage.setItem('agora_perfil', JSON.stringify(perfilData));
+      document.getElementById('perfil-nombre-display').textContent = perfilData.nombre || 'Usuario';
+      actualizarAvatarUI();
+      cerrarPerfil();
+      mostrarToast('✓', 'Perfil actualizado correctamente.');
+    }
+
+    function cerrarSesion() {
+      if (confirm('¿Seguro que deseas cerrar sesión?')) {
+        localStorage.removeItem('agora_sesion');
+        window.location.href = '../index.html';
+      }
+    }
+
+    document.getElementById('modal-perfil').addEventListener('click', function(e) {
+      if (e.target === this) cerrarPerfil();
+    });
+
+    // ── Ayuda ──
+    function enviarAyuda() {
+      var asunto  = document.getElementById('ayuda-asunto').value;
+      var mensaje = document.getElementById('ayuda-mensaje').value.trim();
+      if (!asunto || !mensaje) {
+        mostrarToast('⚠', 'Selecciona un asunto y escribe tu mensaje.');
+        return;
+      }
+      document.getElementById('ayuda-asunto').value  = '';
+      document.getElementById('ayuda-mensaje').value = '';
+      mostrarToast('✓', 'Mensaje enviado. Te responderemos en menos de 24 horas.');
+    }
+
+    // Cerrar modales con Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        cerrarModal();
+        cerrarPerfil();
+        cerrarModalCalificar();
+      }
+    });
+  </script>
+
+</body>
+</html>

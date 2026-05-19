@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ágora — Packing</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/tema.js"></script>
+  <style>
+    .packing-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 20px;
+      align-items: start;
+    }
+    .panel-card {
+      background: #fff;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+    .panel-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-card-title { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+    .panel-card-meta  { font-size: 12px; color: var(--gray-600); }
+    .packing-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .packing-item:last-of-type { border-bottom: none; }
+    .pack-check {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--gray-200);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; transition: all 0.15s; margin-top: 2px;
+    }
+    .pack-check.checked { background: var(--col-farmacia); border-color: var(--col-farmacia); }
+    .pack-check svg { opacity: 0; width: 14px; height: 14px; transition: opacity 0.15s; }
+    .pack-check.checked svg { opacity: 1; }
+    .item-info { flex: 1; }
+    .item-name   { font-size: 14px; font-weight: 600; color: var(--gray-900); margin-bottom: 4px; }
+    .item-detail { font-size: 12px; color: var(--gray-600); margin-bottom: 12px; }
+    .item-checks-row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .check-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--gray-600);
+      cursor: pointer;
+    }
+    .check-label .pack-check { width: 22px; height: 22px; }
+    .weight-row {
+      display: flex; align-items: center; gap: 8px; margin-top: 8px;
+    }
+    .weight-row label { font-size: 12px; color: var(--gray-600); white-space: nowrap; }
+    .weight-input {
+      width: 80px; padding: 5px 10px;
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      color: var(--gray-900); outline: none; transition: border-color 0.15s;
+    }
+    .weight-input:focus { border-color: var(--col-paqueteria); }
+    .weight-unit { font-size: 12px; color: var(--gray-400); }
+    .item-id-badge {
+      flex-shrink: 0; text-align: right;
+      font-family: 'Syne', sans-serif; font-size: 13px;
+      font-weight: 700; color: var(--gray-400);
+    }
+    .resumen-section { padding: 20px; }
+    .resumen-section + .resumen-section { border-top: 1px solid var(--gray-200); }
+    .resumen-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .resumen-row   { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; gap: 16px; }
+    .resumen-label { font-size: 13px; color: var(--gray-600); }
+    .resumen-val   { font-size: 13px; font-weight: 600; }
+    .resumen-val.ok { color: var(--col-farmacia-dark); }
+    .divider { border: none; border-top: 1px solid var(--gray-200); margin: 12px 0; }
+    .btn-full { width: 100%; justify-content: center; margin-bottom: 8px; }
+    .info-nota {
+      margin: 0 20px 20px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 12px; line-height: 1.55;
+      background: var(--col-paqueteria-soft);
+      color: var(--col-paqueteria-dark);
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">
+      <img id="logo-img" src="../imagenes/logo/agoraN.png" alt="Ágora" style="height:48px;vertical-align:middle">
+    </a>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="menu-toggle" onclick="toggleSidebar()" title="Menú">☰</button>
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTema()" aria-label="Activar modo oscuro"></button>
+    </div>
+  </nav>
+
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">Proveedor</div>
+      <a href="dashboard.html" class="sidebar-item"><span class="sidebar-icon">📊</span> Dashboard</a>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">📋</span> Pedidos</a>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">📦</span> Inventario</a>
+
+      <div class="sidebar-section">Operaciones</div>
+      <a href="picking.html" class="sidebar-item"><span class="sidebar-icon">🔍</span> Picking</a>
+      <a href="packing.html" class="sidebar-item activo"><span class="sidebar-icon">📫</span> Packing</a>
+      <a href="facturacion.html" class="sidebar-item"><span class="sidebar-icon">🧾</span> Facturación</a>
+
+      <div class="sidebar-section">Administración</div>
+      <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">➕</span> Agregar producto</a>
+
+      <div style="margin-top:auto;padding-top:24px;border-top:1px solid var(--gray-200)">
+        <a href="proveedor.html" class="sidebar-item"><span class="sidebar-icon">←</span> Volver a proveedor</a>
+      </div>
+    </aside>
+
+    <main class="main-content" id="main-content"></main>
+  </div>
+
+  <script>
+    (function () {
+      var tipo = localStorage.getItem('proveedorActivo') || 'farmacia';
+      var ordenActual = localStorage.getItem('ordenActual');
+
+      if (tipo === 'tecnico' || tipo === 'restaurante') {
+        localStorage.setItem('mensajeToast', 'Este tipo de servicio no requiere packing');
+        window.location = 'proveedor.html';
+        return;
+      }
+
+      var CFG = {
+        farmacia: {
+          title: 'Packing',
+          ordenLabel: 'Orden #1042',
+          meta: 'Hoy, 10:15 · Operario: Juan Manuel · 2 cajas',
+          statusLabel: 'En packing',
+          items: [
+            { id: 'MED-01', name: 'Ibuprofeno 400mg x10',   detail: 'Caja sellada — 10 comprimidos', weight: '0.3', checks: [{ label: 'Empacado', key: 'empacado' }] },
+            { id: 'MED-02', name: 'Vitamina C 1000mg x2',   detail: 'Sobre — 2 tabletas efervescentes', weight: '0.1', checks: [{ label: 'Empacado', key: 'empacado' }] }
+          ],
+          hasWeight: true,
+          nota: 'Registra el peso final de cada caja antes de confirmar. El peso se incluirá en la guía de envío.',
+          resumen: { orden: '#1042', fecha: 'Hoy, 10:15', items: '2 cajas', peso: '0.4 kg est.', estado: 'En progreso' }
+        },
+        paqueteria: {
+          title: 'Packing',
+          ordenLabel: 'Orden #1042',
+          meta: 'Hoy, 10:15 · Operario: Juan Manuel · 2 bultos',
+          statusLabel: 'En packing',
+          items: [
+            { id: 'PKT-041', name: 'Bulto PKT-041', detail: '2.3 kg — Destino: Zona norte',  checks: [{ label: 'Sellado', key: 'sellado' }, { label: 'Etiquetado', key: 'etiquetado' }] },
+            { id: 'DOC-012', name: 'Sobre DOC-012', detail: '0.1 kg — Destino: Centro',       checks: [{ label: 'Sellado', key: 'sellado' }, { label: 'Etiquetado', key: 'etiquetado' }] }
+          ],
+          hasWeight: false,
+          nota: 'Verifica que el sello y la etiqueta de cada bulto sean legibles antes de confirmar.',
+          resumen: { orden: '#1042', fecha: 'Hoy, 10:15', items: '1 bulto + 1 sobre', peso: '2.4 kg', estado: 'En progreso' }
+        }
+      };
+
+      var cfg = CFG[tipo] || CFG.farmacia;
+
+      // Track checked state per item-check
+      var checkStates = {};
+      cfg.items.forEach(function(item) {
+        item.checks.forEach(function(ch) {
+          checkStates[item.id + '_' + ch.key] = false;
+        });
+      });
+
+      function togglePackCheck(el, itemId, checkKey) {
+        el.classList.toggle('checked');
+        checkStates[itemId + '_' + checkKey] = el.classList.contains('checked');
+        verificarPackingCompleto();
+        // Actualizar contador de pendientes
+        var totalChecks = Object.keys(checkStates).length;
+        var checkedCount = Object.values(checkStates).filter(Boolean).length;
+        var pendientes = totalChecks - checkedCount;
+        var contEl = document.getElementById('packing-contador');
+        if (contEl) contEl.textContent = pendientes + ' pendiente' + (pendientes !== 1 ? 's' : '');
+      }
+
+      function verificarPackingCompleto() {
+        var allDone = Object.keys(checkStates).every(function(k) { return checkStates[k]; });
+        var btn = document.getElementById('btn-confirmar-packing');
+        if (btn) btn.disabled = !allDone;
+      }
+
+      function confirmarPacking() {
+        window.location = 'facturacion.html';
+      }
+
+      // Expose globally so onclick works
+      window.togglePackCheck = togglePackCheck;
+      window.confirmarPacking = confirmarPacking;
+
+      function renderItem(item) {
+        var checksHTML = '';
+        if (cfg.hasWeight) {
+          checksHTML = '<div class="item-checks-row">'
+            + item.checks.map(function(ch) {
+              return '<label class="check-label">'
+                + '<div class="pack-check" onclick="togglePackCheck(this,\'' + item.id + '\',\'' + ch.key + '\')">'
+                + '<svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9 10.5,3" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                + '</div>' + ch.label + '</label>';
+            }).join('')
+            + '</div>'
+            + '<div class="weight-row">'
+            + '<label>Peso final:</label>'
+            + '<input class="weight-input" type="number" step="0.1" min="0" value="' + item.weight + '" placeholder="0.0">'
+            + '<span class="weight-unit">kg</span>'
+            + '</div>';
+        } else {
+          checksHTML = '<div class="item-checks-row">'
+            + item.checks.map(function(ch) {
+              return '<label class="check-label">'
+                + '<div class="pack-check" onclick="togglePackCheck(this,\'' + item.id + '\',\'' + ch.key + '\')">'
+                + '<svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9 10.5,3" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                + '</div>' + ch.label + '</label>';
+            }).join('')
+            + '</div>';
+        }
+
+        return '<div class="packing-item">'
+          + '<div class="item-info">'
+          + '<div class="item-name">' + item.name + '</div>'
+          + '<div class="item-detail">' + item.detail + '</div>'
+          + checksHTML
+          + '</div>'
+          + '<div class="item-id-badge">' + item.id + '</div>'
+          + '</div>';
+      }
+
+      var html = '<div class="page-header fade-in">'
+        + '<div>'
+        + '<h1>' + cfg.title + ' <span style="font-size:18px;font-weight:400;color:var(--gray-600)">— ' + (ordenActual || cfg.ordenLabel) + '</span></h1>'
+        + '<p>' + cfg.meta + '</p>'
+        + '</div>'
+        + '<span class="estado-pill estado-en-camino">' + cfg.statusLabel + '</span>'
+        + '</div>'
+
+        + '<div class="packing-grid fade-in-2">'
+
+        + '<div class="panel-card">'
+        + '<div class="panel-card-header">'
+        + '<span class="panel-card-title">Ítems a empacar</span>'
+        + '<span class="panel-card-meta" id="packing-contador">' + cfg.items.length + ' pendiente' + (cfg.items.length !== 1 ? 's' : '') + '</span>'
+        + '</div>'
+        + cfg.items.map(renderItem).join('')
+        + '<div class="info-nota">' + cfg.nota + '</div>'
+        + '</div>'
+
+        + '<div class="panel-card">'
+        + '<div class="resumen-section">'
+        + '<div class="resumen-title">Resumen de packing</div>'
+        + '<div class="resumen-row"><span class="resumen-label">Orden</span><span class="resumen-val">' + (ordenActual || cfg.resumen.orden) + '</span></div>'
+        + '<div class="resumen-row"><span class="resumen-label">Fecha</span><span class="resumen-val">' + cfg.resumen.fecha + '</span></div>'
+        + '<div class="resumen-row"><span class="resumen-label">Ítems</span><span class="resumen-val">' + cfg.resumen.items + '</span></div>'
+        + '<hr class="divider">'
+        + '<div class="resumen-row"><span class="resumen-label">Peso total</span><span class="resumen-val">' + cfg.resumen.peso + '</span></div>'
+        + '<div class="resumen-row"><span class="resumen-label">Estado</span><span class="resumen-val warning">' + cfg.resumen.estado + '</span></div>'
+        + '</div>'
+        + '<div class="resumen-section">'
+        + '<button class="btn btn-dark btn-full" id="btn-confirmar-packing" disabled onclick="confirmarPacking()">Confirmar packing</button>'
+        + '<button class="btn btn-outline btn-full" onclick="window.location=\'picking.html\'">Volver al picking</button>'
+        + '</div>'
+        + '</div>'
+
+        + '</div>';
+
+      document.getElementById('main-content').innerHTML = html;
+    })();
+  </script>
+
+</body>
+</html>

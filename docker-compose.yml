@@ -1,0 +1,14 @@
+services:
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "8003:80"
+    volumes:
+      - ./:/usr/share/nginx/html:ro
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app

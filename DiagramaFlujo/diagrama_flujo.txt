@@ -1,0 +1,157 @@
+flowchart TD
+
+    %% ─────────────────────────────────────────
+    %% PUNTO DE ENTRADA
+    %% ─────────────────────────────────────────
+    START([Inicio del sistema])
+    START --> INDEX[Pagina principal\nindex.html\nTema claro u oscuro seleccionable]
+
+    %% ─────────────────────────────────────────
+    %% BIFURCACION: ROL DE USUARIO
+    %% ─────────────────────────────────────────
+    INDEX --> ROL_INDEX{Accion del usuario}
+    ROL_INDEX -- Ver servicios --> CLIENTE_DIRECTO[Panel de cliente\ncliente.html]
+    ROL_INDEX -- Iniciar sesion --> LOGIN
+
+    %% ─────────────────────────────────────────
+    %% AUTENTICACION: PASO 1 - SELECCION DE ROL
+    %% ─────────────────────────────────────────
+    LOGIN[Pantalla de acceso\nlogin.html]
+    LOGIN --> PASO1[Paso 1: Seleccion de perfil\nSoy cliente / Soy proveedor]
+
+    PASO1 --> ROL_ELEGIDO{Rol elegido}
+    ROL_ELEGIDO -- Cliente --> PASO2_C[/Paso 2: Formulario de credenciales\nTitulo: Acceso cliente/]
+    ROL_ELEGIDO -- Proveedor --> PASO2_P[/Paso 2: Formulario de credenciales\nTitulo: Acceso proveedor/]
+
+    %% ─────────────────────────────────────────
+    %% VALIDACION DE CREDENCIALES
+    %% ─────────────────────────────────────────
+    PASO2_C --> VALIDAR_C{Campos completos}
+    PASO2_P --> VALIDAR_P{Campos completos}
+
+    VALIDAR_C -- No: muestra mensaje de error --> PASO2_C
+    VALIDAR_P -- No: muestra mensaje de error --> PASO2_P
+
+    VALIDAR_C -- Si: limpia proveedorActivo --> CLIENTE[Panel de cliente\ncliente.html]
+    VALIDAR_P -- Si: limpia proveedorActivo --> SELECTOR
+
+    %% ─────────────────────────────────────────
+    %% FLUJO DEL CLIENTE
+    %% ─────────────────────────────────────────
+    CLIENTE_DIRECTO --> CATALOGO
+    CLIENTE --> CATALOGO[Visualiza catalogo de productos y servicios]
+    CATALOGO --> FILTRO[Aplica filtro por categoria\nTodos / Restaurante / Tecnicos / Farmacia / Paqueteria]
+    FILTRO --> SOLICITUD{Crear pedido}
+    SOLICITUD -- No --> CATALOGO
+    SOLICITUD -- Si --> MODAL_PEDIDO[/Modal: direccion, descripcion y correo/]
+    MODAL_PEDIDO --> PEDIDO_CREADO[Pedido registrado\nEstado inicial: Recibido\nCorreo enviado al cliente]
+    PEDIDO_CREADO --> MIS_PEDIDOS[Mis pedidos: listado con estado actual]
+    MIS_PEDIDOS --> SEGUIMIENTO[Timeline de seguimiento por pedido]
+    SEGUIMIENTO --> FINALIZADO{Pedido entregado}
+    FINALIZADO -- No --> MIS_PEDIDOS
+    FINALIZADO -- Si --> CALIFICACION[/Modal de calificacion\n1 a 5 estrellas y comentario opcional/]
+    CALIFICACION --> CLIENTE_FIN([Fin del flujo del cliente])
+
+    %% ─────────────────────────────────────────
+    %% SELECCION DE TIPO DE PROVEEDOR
+    %% Guarda 'proveedorActivo' en localStorage
+    %% ─────────────────────────────────────────
+    SELECTOR[Selector de tipo de proveedor\nproveedor.html]
+    SELECTOR --> TIPO{Tipo de negocio\nseleccionado}
+    TIPO -- Restaurante --> PANEL
+    TIPO -- Farmacia    --> PANEL
+    TIPO -- Paqueteria  --> PANEL
+    TIPO -- Tecnico     --> PANEL
+
+    %% ─────────────────────────────────────────
+    %% PANEL DEL PROVEEDOR
+    %% ─────────────────────────────────────────
+    PANEL[Panel del proveedor\nDashboard / Pedidos / Inventario]
+    PANEL --> SECCION{Seccion seleccionada}
+
+    SECCION -- Dashboard --> DASH[KPIs: pedidos, pendientes, ingresos, calificacion\nAlertas de stock critico y calificacion baja]
+    DASH --> PANEL
+
+    SECCION -- Inventario --> INV[Tabla de productos con nivel de stock\nOK / Bajo / Critico]
+    INV --> INV_ACCION{Accion sobre producto}
+    INV_ACCION -- Editar --> MODAL_EDITAR[/Modal: nombre, precio, stock/]
+    INV_ACCION -- Agregar nuevo --> FORM_PROD[/Formulario de nuevo producto\nnombre, precio, stock, stock minimo/]
+    MODAL_EDITAR --> PANEL
+    FORM_PROD --> PANEL
+
+    SECCION -- Pedidos --> LISTA_PEDIDOS[Tabla de pedidos filtrada\npor tipo de proveedor activo]
+
+    %% ─────────────────────────────────────────
+    %% GESTION DE PEDIDOS
+    %% ─────────────────────────────────────────
+    LISTA_PEDIDOS --> PEDIDO_ESTADO{Estado actual del pedido}
+
+    PEDIDO_ESTADO -- Recibido --> DECISION{Aceptar o rechazar}
+    DECISION -- Rechazar --> CANCELADO[Pedido cancelado\nCorreo enviado al cliente]
+    DECISION -- Aceptar --> PREPARANDO[Estado: Preparando\nBoton Picking habilitado en la fila]
+
+    PEDIDO_ESTADO -- En camino --> MARCAR_ENTREGADO[Marcar como entregado]
+    MARCAR_ENTREGADO --> ENTREGADO[Estado: Entregado\nCorreo enviado al cliente]
+
+    PEDIDO_ESTADO -- Entregado --> VER_CAL[Visualiza calificacion del cliente]
+    VER_CAL --> PANEL
+
+    %% ─────────────────────────────────────────
+    %% INICIO DE OPERACION: PICKING
+    %% Guarda 'ordenActual' en localStorage
+    %% ─────────────────────────────────────────
+    PREPARANDO --> REQUIERE_PICKING{Tipo de proveedor\nrequiere picking}
+    REQUIERE_PICKING -- Tecnico: No\nRedirige con aviso --> PANEL
+    REQUIERE_PICKING -- Restaurante / Farmacia / Paqueteria: Si --> PICKING
+
+    PICKING[Modulo de Picking\npicking.html\nItems a recoger con ubicacion y cantidad\nNumero de orden leido desde localStorage]
+
+    PICKING --> MARCAR_ITEMS[/Operario marca cada item como recogido/]
+    MARCAR_ITEMS --> ITEMS_OK{Todos los items\nmarcados}
+    ITEMS_OK -- No: boton Confirmar deshabilitado --> MARCAR_ITEMS
+    ITEMS_OK -- Si: boton Confirmar habilitado --> CONFIRMAR_PICKING[Confirmar picking]
+
+    %% ─────────────────────────────────────────
+    %% PROCESO DE PACKING
+    %% ─────────────────────────────────────────
+    CONFIRMAR_PICKING --> REQUIERE_PACKING{Tipo de proveedor\nrequiere packing}
+    REQUIERE_PACKING -- Restaurante: No\nRedirige con aviso --> FACTURACION
+    REQUIERE_PACKING -- Farmacia / Paqueteria: Si --> PACKING
+
+    PACKING[Modulo de Packing\npacking.html\nVerificacion de cajas y bultos\nNumero de orden leido desde localStorage]
+
+    PACKING --> VERIFICAR[/Operario completa checks por item/]
+    VERIFICAR --> PESO{Requiere registro\nde peso}
+    PESO -- Farmacia: Si --> REGISTRAR_PESO[/Registra peso final en kg por caja/]
+    REGISTRAR_PESO --> CHECKS_OK
+    PESO -- Paqueteria: No --> CHECKS_OK
+
+    CHECKS_OK{Todos los checks\ncompletados}
+    CHECKS_OK -- No: boton Confirmar deshabilitado --> VERIFICAR
+    CHECKS_OK -- Si: boton Confirmar habilitado --> CONFIRMAR_PACKING[Confirmar packing]
+    CONFIRMAR_PACKING --> FACTURACION
+
+    %% ─────────────────────────────────────────
+    %% PROCESO DE FACTURACION
+    %% Numero de orden leido desde localStorage
+    %% ─────────────────────────────────────────
+    FACTURACION[Modulo de Facturacion\nfacturacion.html\nRevision de orden, items, subtotal, IVA y total]
+
+    FACTURACION --> DECISION_FAC{Confirmar o\ncancelar}
+    DECISION_FAC -- Cancelar --> PANEL
+    DECISION_FAC -- Confirmar --> DESPACHAR[Cajas marcadas como Despachado\nEstado visual actualizado]
+
+    DESPACHAR --> MODAL_CONF[Modal de confirmacion\nNumero de documento generado\nFactura / Entrega / Servicio cerrado]
+
+    MODAL_CONF --> ESTADO_FINAL{Tipo de proveedor}
+    ESTADO_FINAL -- Restaurante --> EST_ENTREGADO[Estado del pedido: Entregado]
+    ESTADO_FINAL -- Farmacia    --> EST_ENCAMINO[Estado del pedido: En camino]
+    ESTADO_FINAL -- Paqueteria  --> EST_ENCAMINO
+    ESTADO_FINAL -- Tecnico     --> EST_FINALIZADO[Estado del servicio: Finalizado]
+
+    EST_ENTREGADO  --> NOTIF[Notificacion enviada al cliente por correo]
+    EST_ENCAMINO   --> NOTIF
+    EST_FINALIZADO --> NOTIF
+
+    NOTIF --> FIN([Flujo operativo completado\nRetorno al panel del proveedor])
+    FIN --> PANEL
