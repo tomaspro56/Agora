@@ -6,6 +6,18 @@ Proyecto académico — Materia Lógica de Programación · Instituto Tecnológi
 
 ---
 
+## 📸 Demo visual
+
+Aplicación funcionando con datos reales sobre Docker (Nginx + Flask + SQLite).
+
+| ![Landing](docs/landing.png) | ![Login](docs/login.png) |
+|---|---|
+| **Landing principal** — Hero con carousel de categorías y CTA de acceso. | **Selección de rol** — Onboarding multi-rol (cliente o proveedor). |
+| ![Catálogo](docs/catalogo.png) | ![Proveedor](docs/proveedor.png) |
+| **Panel del cliente** — Catálogo de servicios con filtros por categoría. | **Panel del proveedor** — Gestión de inventario y operaciones. |
+
+---
+
 ## 🗂️ Estado actual del proyecto
 
 | Componente | Estado | Detalle |
@@ -27,16 +39,16 @@ Proyecto académico — Materia Lógica de Programación · Instituto Tecnológi
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    docker compose                        │
-│                                                          │
+│                    docker compose                       │
+│                                                         │
 │  ┌──────────────────┐         ┌──────────────────┐      │
 │  │ Frontend         │  HTTP   │ Backend          │      │
 │  │ nginx:alpine     │ ──────► │ python:3.11-slim │      │
 │  │ Puerto :8003     │         │ Puerto :5000     │      │
 │  │ HTML / CSS / JS  │         │ Flask + CORS     │      │
 │  └──────────────────┘         │ SQLAlchemy       │      │
-│                                │ SQLite (agora.db)│      │
-│                                └──────────────────┘      │
+│                                │ SQLite (agora.db)│     │
+│                                └──────────────────┘     │
 └─────────────────────────────────────────────────────────┘
 ```
 
