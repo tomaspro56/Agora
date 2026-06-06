@@ -47,8 +47,8 @@ Aplicación funcionando con datos reales sobre Docker (Nginx + Flask + SQLite).
 │  │ Puerto :8003     │         │ Puerto :5000     │      │
 │  │ HTML / CSS / JS  │         │ Flask + CORS     │      │
 │  └──────────────────┘         │ SQLAlchemy       │      │
-│                                │ SQLite (agora.db)│     │
-│                                └──────────────────┘     │
+│                               │ SQLite (agora.db)│      │
+│                               └──────────────────┘      │
 └─────────────────────────────────────────────────────────┘
 ```
 
